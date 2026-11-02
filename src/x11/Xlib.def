@@ -1,0 +1,289 @@
+DEFINITION MODULE FOR "C" Xlib ;
+
+(* direct bindings to the non-variadic parts of libX11, checked against
+   /usr/include/X11/Xlib.h: int is INTEGER, unsigned long is LONGCARD *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+
+EXPORT UNQUALIFIED
+  Display, Window, Atom, Time, Pixmap, Cursor, KeySym, GC, Drawable,
+  None, CurrentTime, False, True,
+  KeyPress, KeyRelease, ButtonPress, ButtonRelease, MotionNotify,
+  EnterNotify, LeaveNotify, FocusIn, FocusOut, Expose, CreateNotify,
+  DestroyNotify, UnmapNotify, MapNotify, MapRequest, ReparentNotify,
+  ConfigureNotify, ConfigureRequest, PropertyNotify, ClientMessage,
+  MappingNotify, SelectionClear,
+  NoEventMask, KeyPressMask, KeyReleaseMask, ButtonPressMask,
+  ButtonReleaseMask, EnterWindowMask, LeaveWindowMask, PointerMotionMask,
+  ButtonMotionMask, ExposureMask, StructureNotifyMask,
+  SubstructureNotifyMask, SubstructureRedirectMask, FocusChangeMask,
+  PropertyChangeMask,
+  ShiftMask, LockMask, ControlMask, Mod1Mask, Mod4Mask, AnyModifier,
+  Button1Mask, Button2Mask, Button3Mask,
+  AnyButton, AnyKey, GrabModeSync, GrabModeAsync, ReplayPointer,
+  RevertToPointerRoot, RevertToParent, GrabSuccess,
+  PropModeReplace, PropModeAppend, PropertyNewValue, PropertyDelete,
+  CWX, CWY, CWWidth, CWHeight, CWBorderWidth, CWSibling, CWStackMode,
+  Above, Below,
+  IsUnmapped, IsViewable, NotifyNormal, NotifyGrab, NotifyUngrab,
+  NotifyInferior,
+  WithdrawnState, NormalState, IconicState,
+  XA_ATOM, XA_CARDINAL, XA_STRING, XA_WINDOW, XA_WM_NAME, XA_WM_HINTS,
+  XA_WM_NORMAL_HINTS, XA_WM_TRANSIENT_FOR,
+  XOpenDisplay, XCloseDisplay, XDefaultScreen, XRootWindow, XDisplayWidth,
+  XDisplayHeight, XConnectionNumber, XDefaultVisual, XDefaultColormap,
+  XDefaultDepth, XPending, XFlush, XSync, XInternAtom, XSelectInput,
+  XCreateSimpleWindow, XDestroyWindow, XMapWindow, XMapRaised, XUnmapWindow,
+  XReparentWindow, XMoveWindow, XResizeWindow, XMoveResizeWindow,
+  XRaiseWindow, XLowerWindow, XRestackWindows, XSetInputFocus,
+  XGrabPointer, XUngrabPointer, XGrabButton, XUngrabButton, XGrabKey,
+  XUngrabKey, XKeysymToKeycode, XGetTransientForHint, XGetWMProtocols,
+  XSetWMProtocols, XFree, XChangeProperty, XDeleteProperty,
+  XGetWindowProperty, XKillClient, XAddToSaveSet, XRemoveFromSaveSet,
+  XSetWindowBorderWidth, XSetWindowBackground, XSetWindowBackgroundPixmap,
+  XClearWindow, XClearArea, XCreateFontCursor, XDefineCursor, XFreeCursor,
+  XCreateGC, XFreeGC, XSetForeground, XFillRectangle, XDrawLine,
+  XDrawRectangle, XDrawPoint, XCreatePixmap, XFreePixmap, XCopyArea,
+  XQueryTree, XSetSelectionOwner, XGetSelectionOwner, XGrabServer,
+  XUngrabServer, XAllowEvents, XQueryPointer, XSetTransientForHint,
+  XGetInputFocus, XGrabKeyboard, XUngrabKeyboard, XBell ;
+
+TYPE
+  Display = ADDRESS ;
+  Window = LONGCARD ;
+  Drawable = LONGCARD ;
+  Atom = LONGCARD ;
+  Time = LONGCARD ;
+  Pixmap = LONGCARD ;
+  Cursor = LONGCARD ;
+  KeySym = LONGCARD ;
+  GC = ADDRESS ;
+
+CONST
+  None = 0 ;
+  CurrentTime = 0 ;
+  False = 0 ;
+  True = 1 ;
+
+  KeyPress = 2 ;
+  KeyRelease = 3 ;
+  ButtonPress = 4 ;
+  ButtonRelease = 5 ;
+  MotionNotify = 6 ;
+  EnterNotify = 7 ;
+  LeaveNotify = 8 ;
+  FocusIn = 9 ;
+  FocusOut = 10 ;
+  Expose = 12 ;
+  CreateNotify = 16 ;
+  DestroyNotify = 17 ;
+  UnmapNotify = 18 ;
+  MapNotify = 19 ;
+  MapRequest = 20 ;
+  ReparentNotify = 21 ;
+  ConfigureNotify = 22 ;
+  ConfigureRequest = 23 ;
+  PropertyNotify = 28 ;
+  SelectionClear = 29 ;
+  ClientMessage = 33 ;
+  MappingNotify = 34 ;
+
+  NoEventMask = 0 ;
+  KeyPressMask = 1 ;
+  KeyReleaseMask = 2 ;
+  ButtonPressMask = 4 ;
+  ButtonReleaseMask = 8 ;
+  EnterWindowMask = 16 ;
+  LeaveWindowMask = 32 ;
+  PointerMotionMask = 64 ;
+  ButtonMotionMask = 8192 ;
+  ExposureMask = 32768 ;
+  StructureNotifyMask = 131072 ;
+  SubstructureNotifyMask = 524288 ;
+  SubstructureRedirectMask = 1048576 ;
+  FocusChangeMask = 2097152 ;
+  PropertyChangeMask = 4194304 ;
+
+  ShiftMask = 1 ;
+  LockMask = 2 ;
+  ControlMask = 4 ;
+  Mod1Mask = 8 ;
+  Mod4Mask = 64 ;
+  Button1Mask = 256 ;
+  Button2Mask = 512 ;
+  Button3Mask = 1024 ;
+  AnyModifier = 32768 ;
+
+  AnyButton = 0 ;
+  AnyKey = 0 ;
+  GrabModeSync = 0 ;
+  GrabModeAsync = 1 ;
+  ReplayPointer = 2 ;
+  GrabSuccess = 0 ;
+  RevertToPointerRoot = 1 ;
+  RevertToParent = 2 ;
+
+  PropModeReplace = 0 ;
+  PropModeAppend = 2 ;
+  PropertyNewValue = 0 ;
+  PropertyDelete = 1 ;
+
+  CWX = 1 ;
+  CWY = 2 ;
+  CWWidth = 4 ;
+  CWHeight = 8 ;
+  CWBorderWidth = 16 ;
+  CWSibling = 32 ;
+  CWStackMode = 64 ;
+  Above = 0 ;
+  Below = 1 ;
+
+  IsUnmapped = 0 ;
+  IsViewable = 2 ;
+  NotifyNormal = 0 ;
+  NotifyGrab = 1 ;
+  NotifyUngrab = 2 ;
+  NotifyInferior = 2 ;
+
+  WithdrawnState = 0 ;
+  NormalState = 1 ;
+  IconicState = 3 ;
+
+  XA_ATOM = 4 ;
+  XA_CARDINAL = 6 ;
+  XA_STRING = 31 ;
+  XA_WINDOW = 33 ;
+  XA_WM_HINTS = 35 ;
+  XA_WM_NAME = 39 ;
+  XA_WM_NORMAL_HINTS = 40 ;
+  XA_WM_TRANSIENT_FOR = 68 ;
+
+PROCEDURE XOpenDisplay (name: ADDRESS) : Display ;
+PROCEDURE XCloseDisplay (dpy: Display) : INTEGER ;
+PROCEDURE XDefaultScreen (dpy: Display) : INTEGER ;
+PROCEDURE XRootWindow (dpy: Display; screen: INTEGER) : Window ;
+PROCEDURE XDisplayWidth (dpy: Display; screen: INTEGER) : INTEGER ;
+PROCEDURE XDisplayHeight (dpy: Display; screen: INTEGER) : INTEGER ;
+PROCEDURE XConnectionNumber (dpy: Display) : INTEGER ;
+PROCEDURE XDefaultVisual (dpy: Display; screen: INTEGER) : ADDRESS ;
+PROCEDURE XDefaultColormap (dpy: Display; screen: INTEGER) : LONGCARD ;
+PROCEDURE XDefaultDepth (dpy: Display; screen: INTEGER) : INTEGER ;
+PROCEDURE XPending (dpy: Display) : INTEGER ;
+PROCEDURE XFlush (dpy: Display) : INTEGER ;
+PROCEDURE XSync (dpy: Display; discard: INTEGER) : INTEGER ;
+PROCEDURE XInternAtom (dpy: Display; name: ARRAY OF CHAR;
+                       onlyIfExists: INTEGER) : Atom ;
+PROCEDURE XSelectInput (dpy: Display; w: Window; mask: LONGINT) : INTEGER ;
+PROCEDURE XCreateSimpleWindow (dpy: Display; parent: Window;
+                               x, y: INTEGER; width, height,
+                               borderWidth: CARDINAL;
+                               border, background: LONGCARD) : Window ;
+PROCEDURE XDestroyWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XMapWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XMapRaised (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XUnmapWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XReparentWindow (dpy: Display; w, parent: Window;
+                           x, y: INTEGER) : INTEGER ;
+PROCEDURE XMoveWindow (dpy: Display; w: Window; x, y: INTEGER) : INTEGER ;
+PROCEDURE XResizeWindow (dpy: Display; w: Window;
+                         width, height: CARDINAL) : INTEGER ;
+PROCEDURE XMoveResizeWindow (dpy: Display; w: Window; x, y: INTEGER;
+                             width, height: CARDINAL) : INTEGER ;
+PROCEDURE XRaiseWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XLowerWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XRestackWindows (dpy: Display; windows: ADDRESS;
+                           n: INTEGER) : INTEGER ;
+PROCEDURE XSetInputFocus (dpy: Display; w: Window; revertTo: INTEGER;
+                          t: Time) : INTEGER ;
+PROCEDURE XGetInputFocus (dpy: Display; VAR w: Window;
+                          VAR revertTo: INTEGER) : INTEGER ;
+PROCEDURE XGrabPointer (dpy: Display; w: Window; ownerEvents: INTEGER;
+                        mask: CARDINAL; pointerMode, keyboardMode: INTEGER;
+                        confineTo: Window; cursor: Cursor;
+                        t: Time) : INTEGER ;
+PROCEDURE XUngrabPointer (dpy: Display; t: Time) : INTEGER ;
+PROCEDURE XGrabKeyboard (dpy: Display; w: Window; ownerEvents: INTEGER;
+                         pointerMode, keyboardMode: INTEGER;
+                         t: Time) : INTEGER ;
+PROCEDURE XUngrabKeyboard (dpy: Display; t: Time) : INTEGER ;
+PROCEDURE XGrabButton (dpy: Display; button, modifiers: CARDINAL;
+                       w: Window; ownerEvents: INTEGER; mask: CARDINAL;
+                       pointerMode, keyboardMode: INTEGER;
+                       confineTo: Window; cursor: Cursor) : INTEGER ;
+PROCEDURE XUngrabButton (dpy: Display; button, modifiers: CARDINAL;
+                         w: Window) : INTEGER ;
+PROCEDURE XGrabKey (dpy: Display; keycode: INTEGER; modifiers: CARDINAL;
+                    w: Window; ownerEvents: INTEGER;
+                    pointerMode, keyboardMode: INTEGER) : INTEGER ;
+PROCEDURE XUngrabKey (dpy: Display; keycode: INTEGER; modifiers: CARDINAL;
+                      w: Window) : INTEGER ;
+PROCEDURE XKeysymToKeycode (dpy: Display; sym: KeySym) : CHAR ;
+PROCEDURE XGetTransientForHint (dpy: Display; w: Window;
+                                VAR owner: Window) : INTEGER ;
+PROCEDURE XSetTransientForHint (dpy: Display; w, owner: Window) : INTEGER ;
+PROCEDURE XGetWMProtocols (dpy: Display; w: Window; VAR protocols: ADDRESS;
+                           VAR count: INTEGER) : INTEGER ;
+PROCEDURE XSetWMProtocols (dpy: Display; w: Window; protocols: ADDRESS;
+                           count: INTEGER) : INTEGER ;
+PROCEDURE XFree (data: ADDRESS) : INTEGER ;
+PROCEDURE XChangeProperty (dpy: Display; w: Window; property, type: Atom;
+                           format, mode: INTEGER; data: ADDRESS;
+                           nelements: INTEGER) : INTEGER ;
+PROCEDURE XDeleteProperty (dpy: Display; w: Window;
+                           property: Atom) : INTEGER ;
+PROCEDURE XGetWindowProperty (dpy: Display; w: Window; property: Atom;
+                              offset, length: LONGINT; delete: INTEGER;
+                              reqType: Atom; VAR actualType: Atom;
+                              VAR actualFormat: INTEGER;
+                              VAR nitems, bytesAfter: LONGCARD;
+                              VAR prop: ADDRESS) : INTEGER ;
+PROCEDURE XKillClient (dpy: Display; resource: LONGCARD) : INTEGER ;
+PROCEDURE XAddToSaveSet (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XRemoveFromSaveSet (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XSetWindowBorderWidth (dpy: Display; w: Window;
+                                 width: CARDINAL) : INTEGER ;
+PROCEDURE XSetWindowBackground (dpy: Display; w: Window;
+                                pixel: LONGCARD) : INTEGER ;
+PROCEDURE XSetWindowBackgroundPixmap (dpy: Display; w: Window;
+                                      p: Pixmap) : INTEGER ;
+PROCEDURE XClearWindow (dpy: Display; w: Window) : INTEGER ;
+PROCEDURE XClearArea (dpy: Display; w: Window; x, y: INTEGER;
+                      width, height: CARDINAL;
+                      exposures: INTEGER) : INTEGER ;
+PROCEDURE XCreateFontCursor (dpy: Display; shape: CARDINAL) : Cursor ;
+PROCEDURE XDefineCursor (dpy: Display; w: Window; c: Cursor) : INTEGER ;
+PROCEDURE XFreeCursor (dpy: Display; c: Cursor) : INTEGER ;
+PROCEDURE XCreateGC (dpy: Display; d: Drawable; mask: LONGCARD;
+                     values: ADDRESS) : GC ;
+PROCEDURE XFreeGC (dpy: Display; gc: GC) : INTEGER ;
+PROCEDURE XSetForeground (dpy: Display; gc: GC;
+                          pixel: LONGCARD) : INTEGER ;
+PROCEDURE XFillRectangle (dpy: Display; d: Drawable; gc: GC; x, y: INTEGER;
+                          width, height: CARDINAL) : INTEGER ;
+PROCEDURE XDrawLine (dpy: Display; d: Drawable; gc: GC;
+                     x1, y1, x2, y2: INTEGER) : INTEGER ;
+PROCEDURE XDrawRectangle (dpy: Display; d: Drawable; gc: GC; x, y: INTEGER;
+                          width, height: CARDINAL) : INTEGER ;
+PROCEDURE XDrawPoint (dpy: Display; d: Drawable; gc: GC;
+                      x, y: INTEGER) : INTEGER ;
+PROCEDURE XCreatePixmap (dpy: Display; d: Drawable; width, height,
+                         depth: CARDINAL) : Pixmap ;
+PROCEDURE XFreePixmap (dpy: Display; p: Pixmap) : INTEGER ;
+PROCEDURE XCopyArea (dpy: Display; src, dest: Drawable; gc: GC;
+                     srcX, srcY: INTEGER; width, height: CARDINAL;
+                     destX, destY: INTEGER) : INTEGER ;
+PROCEDURE XQueryTree (dpy: Display; w: Window; VAR root, parent: Window;
+                      VAR children: ADDRESS;
+                      VAR count: CARDINAL) : INTEGER ;
+PROCEDURE XSetSelectionOwner (dpy: Display; selection: Atom; owner: Window;
+                              t: Time) : INTEGER ;
+PROCEDURE XGetSelectionOwner (dpy: Display; selection: Atom) : Window ;
+PROCEDURE XGrabServer (dpy: Display) : INTEGER ;
+PROCEDURE XUngrabServer (dpy: Display) : INTEGER ;
+PROCEDURE XAllowEvents (dpy: Display; mode: INTEGER; t: Time) : INTEGER ;
+PROCEDURE XQueryPointer (dpy: Display; w: Window; VAR root, child: Window;
+                         VAR rootX, rootY, winX, winY: INTEGER;
+                         VAR mask: CARDINAL) : INTEGER ;
+PROCEDURE XBell (dpy: Display; percent: INTEGER) : INTEGER ;
+
+END Xlib.

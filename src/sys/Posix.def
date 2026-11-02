@@ -1,9 +1,80 @@
 DEFINITION MODULE FOR "C" Posix ;
 
-FROM SYSTEM IMPORT ADDRESS, CSIZE_T, CSSIZE_T ;
+(* libc calls not covered by gm2's libc module, plus sysglue.c *)
 
-EXPORT UNQUALIFIED strerror ;
+FROM SYSTEM IMPORT ADDRESS, CARDINAL16 ;
+
+EXPORT UNQUALIFIED
+  PollFd, POLLIN, WNOHANG, SIGTERM, SIGKILL, ATFDCWD, RENAMENOREPLACE,
+  EEXIST, ENOENT, EXDEV, EINVAL, ENOTEMPTY, EINTR, ENOSYS,
+  OREADONLY, OWRITEONLY, OCREAT, OEXCL, OCLOEXEC, ODIRECTORY, ONOFOLLOW,
+  XOK, SIFMT, SIFDIR, SIFREG, SIFLNK,
+  strerror, poll, waitpid, kill, access, mkdir, rmdir, unlink, renameat2,
+  opendir, closedir, symlink, readlink, chmod, fsync,
+  mx_watch_signals, mx_take_signal, mx_reset_signals, mx_init_locale,
+  mx_spawn, mx_file_info, mx_read_dir, mx_errno, mx_format_time ;
+
+TYPE
+  PollFd = RECORD
+    fd: INTEGER ;
+    events, revents: CARDINAL16 ;
+  END ;
+
+CONST
+  POLLIN = 1 ;
+  WNOHANG = 1 ;
+  SIGTERM = 15 ;
+  SIGKILL = 9 ;
+  ATFDCWD = -100 ;
+  RENAMENOREPLACE = 1 ;
+  ENOENT = 2 ;
+  EINTR = 4 ;
+  EEXIST = 17 ;
+  EXDEV = 18 ;
+  EINVAL = 22 ;
+  ENOSYS = 38 ;
+  ENOTEMPTY = 39 ;
+  OREADONLY = 0 ;
+  OWRITEONLY = 1 ;
+  OCREAT = 64 ;
+  OEXCL = 128 ;
+  ODIRECTORY = 65536 ;
+  ONOFOLLOW = 131072 ;
+  OCLOEXEC = 524288 ;
+  XOK = 1 ;
+  SIFMT = 61440 ;
+  SIFDIR = 16384 ;
+  SIFREG = 32768 ;
+  SIFLNK = 40960 ;
 
 PROCEDURE strerror (errnum: INTEGER) : ADDRESS ;
+PROCEDURE poll (VAR fds: PollFd; n: LONGCARD; timeout: INTEGER) : INTEGER ;
+PROCEDURE waitpid (pid: INTEGER; VAR status: INTEGER;
+                   options: INTEGER) : INTEGER ;
+PROCEDURE kill (pid, sig: INTEGER) : INTEGER ;
+PROCEDURE access (path: ADDRESS; mode: INTEGER) : INTEGER ;
+PROCEDURE mkdir (path: ADDRESS; mode: CARDINAL) : INTEGER ;
+PROCEDURE rmdir (path: ADDRESS) : INTEGER ;
+PROCEDURE unlink (path: ADDRESS) : INTEGER ;
+PROCEDURE renameat2 (oldDir: INTEGER; old: ADDRESS; newDir: INTEGER;
+                     new: ADDRESS; flags: CARDINAL) : INTEGER ;
+PROCEDURE opendir (path: ADDRESS) : ADDRESS ;
+PROCEDURE closedir (dir: ADDRESS) : INTEGER ;
+PROCEDURE symlink (target, path: ADDRESS) : INTEGER ;
+PROCEDURE readlink (path, buf: ADDRESS; size: LONGCARD) : LONGINT ;
+PROCEDURE chmod (path: ADDRESS; mode: CARDINAL) : INTEGER ;
+PROCEDURE fsync (fd: INTEGER) : INTEGER ;
+
+PROCEDURE mx_watch_signals ;
+PROCEDURE mx_take_signal () : INTEGER ;
+PROCEDURE mx_reset_signals ;
+PROCEDURE mx_init_locale ;
+PROCEDURE mx_spawn (argv: ADDRESS; dir: ADDRESS) : INTEGER ;
+PROCEDURE mx_file_info (path: ADDRESS; follow: INTEGER; VAR mode: CARDINAL;
+                        VAR size, mtime: LONGINT) : INTEGER ;
+PROCEDURE mx_read_dir (dir: ADDRESS) : ADDRESS ;
+PROCEDURE mx_errno () : INTEGER ;
+PROCEDURE mx_format_time (t: LONGINT; fmt: ARRAY OF CHAR;
+                          VAR buf: ARRAY OF CHAR; len: INTEGER) : INTEGER ;
 
 END Posix.

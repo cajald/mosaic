@@ -1,0 +1,62 @@
+DEFINITION MODULE FOR "C" XGlue ;
+
+(* see xglue.c; Event mirrors mx_event field for field *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+FROM Xlib IMPORT Display, Window, Atom, KeySym ;
+
+EXPORT UNQUALIFIED
+  Event, mx_next_event, mx_compress_motion, mx_install_error_handler,
+  mx_quiet_errors, mx_error_count, mx_become_wm, mx_window_attrs,
+  mx_size_hints, mx_set_size_hints, mx_wm_hints, mx_set_override_redirect,
+  mx_set_bit_gravity, mx_configure_window, mx_send_configure_notify,
+  mx_send_client_message, mx_numlock_mask, mx_create_ic, mx_destroy_ic,
+  mx_close_im, mx_lookup_key ;
+
+TYPE
+  Event = RECORD
+    type, sendEvent: INTEGER ;
+    window, subwindow, atom: LONGCARD ;
+    x, y, width, height, border, xRoot, yRoot: INTEGER ;
+    state, detail: CARDINAL ;
+    time, valueMask: LONGCARD ;
+    overrideRedirect, format: INTEGER ;
+    data: ARRAY [0..4] OF LONGINT ;
+    raw: ARRAY [0..23] OF LONGINT ;
+  END ;
+
+PROCEDURE mx_next_event (dpy: Display; VAR e: Event) : INTEGER ;
+PROCEDURE mx_compress_motion (dpy: Display; VAR e: Event) ;
+PROCEDURE mx_install_error_handler ;
+PROCEDURE mx_quiet_errors (quiet: INTEGER) ;
+PROCEDURE mx_error_count () : INTEGER ;
+PROCEDURE mx_become_wm (dpy: Display; root: Window;
+                        mask: LONGINT) : INTEGER ;
+PROCEDURE mx_window_attrs (dpy: Display; w: Window;
+                           VAR x, y, width, height, mapState,
+                               overrideRedirect: INTEGER) : INTEGER ;
+PROCEDURE mx_size_hints (dpy: Display; w: Window;
+                         VAR out: ARRAY OF INTEGER) : INTEGER ;
+PROCEDURE mx_set_size_hints (dpy: Display; w: Window;
+                             minW, minH, maxW, maxH: INTEGER) ;
+PROCEDURE mx_wm_hints (dpy: Display; w: Window;
+                       VAR input, urgent, state: INTEGER) : INTEGER ;
+PROCEDURE mx_set_override_redirect (dpy: Display; w: Window; on: INTEGER) ;
+PROCEDURE mx_set_bit_gravity (dpy: Display; w: Window; gravity: INTEGER) ;
+PROCEDURE mx_configure_window (dpy: Display; w: Window; mask: CARDINAL;
+                               x, y, width, height, border: INTEGER;
+                               sibling: Window; stackMode: INTEGER) ;
+PROCEDURE mx_send_configure_notify (dpy: Display; w: Window;
+                                    x, y, width, height: INTEGER) ;
+PROCEDURE mx_send_client_message (dpy: Display; dest, w: Window; type: Atom;
+                                  mask: LONGINT;
+                                  d0, d1, d2, d3, d4: LONGINT) ;
+PROCEDURE mx_numlock_mask (dpy: Display) : CARDINAL ;
+PROCEDURE mx_create_ic (dpy: Display; w: Window) : ADDRESS ;
+PROCEDURE mx_destroy_ic (ic: ADDRESS) ;
+PROCEDURE mx_close_im ;
+PROCEDURE mx_lookup_key (ic: ADDRESS; VAR raw: ARRAY OF LONGINT;
+                         VAR buf: ARRAY OF CHAR; len: INTEGER;
+                         VAR sym: KeySym) : INTEGER ;
+
+END XGlue.

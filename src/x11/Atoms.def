@@ -1,0 +1,29 @@
+DEFINITION MODULE Atoms ;
+
+(* icccm, ewmh and mosaic atoms, interned once per connection *)
+
+FROM Xlib IMPORT Atom ;
+
+VAR
+  WmProtocols, WmDeleteWindow, WmTakeFocus, WmState, WmChangeState,
+  WmClass, Utf8String, MotifWmHints,
+  NetSupported, NetSupportingWmCheck, NetClientList, NetClientListStacking,
+  NetActiveWindow, NetNumberOfDesktops, NetCurrentDesktop,
+  NetDesktopNames, NetDesktopGeometry, NetDesktopViewport, NetWorkarea,
+  NetCloseWindow, NetWmName, NetWmVisibleName, NetWmDesktop, NetWmState,
+  NetWmStateFullscreen, NetWmStateHidden, NetWmStateMaximizedVert,
+  NetWmStateMaximizedHorz, NetWmStateModal, NetWmStateDemandsAttention,
+  NetWmWindowType, NetWmWindowTypeDock, NetWmWindowTypeDesktop,
+  NetWmWindowTypeDialog, NetWmWindowTypeSplash, NetWmWindowTypeUtility,
+  NetWmWindowTypeNormal, NetWmStrut, NetWmStrutPartial, NetFrameExtents,
+  NetRequestFrameExtents, NetWmPid,
+  MosaicCommand: Atom ;
+
+CONST
+  (* data[0] of a _MOSAIC_COMMAND client message sent to the root *)
+  CommandLogout = 1 ;
+  CommandLauncher = 2 ;
+
+PROCEDURE Init ;
+
+END Atoms.

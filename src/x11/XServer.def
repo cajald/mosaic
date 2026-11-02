@@ -1,0 +1,26 @@
+DEFINITION MODULE XServer ;
+
+(* the display connection shared by every module of a program *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+FROM Xlib IMPORT Display, Window ;
+FROM XGlue IMPORT Event ;
+
+VAR
+  dpy: Display ;
+  screen: INTEGER ;
+  root: Window ;
+  width, height: INTEGER ;
+  visual: ADDRESS ;
+  colormap: LONGCARD ;
+  depth: INTEGER ;
+
+PROCEDURE Open () : BOOLEAN ;
+PROCEDURE Close ;
+
+(* wait until an x event is queued; FALSE on timeout or signal *)
+PROCEDURE WaitEvent (timeoutMs: INTEGER) : BOOLEAN ;
+
+PROCEDURE NextEvent (VAR e: Event) : BOOLEAN ;
+
+END XServer.

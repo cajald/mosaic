@@ -15,7 +15,7 @@ X11_CFLAGS := $(shell $(PKG_CONFIG) --cflags x11 xft)
 X11_LIBS := $(shell $(PKG_CONFIG) --libs x11 xft)
 
 BUILD := build
-SRCDIRS := src src/sys src/lib
+SRCDIRS := src src/x11 src/sys src/lib
 INCLUDES := $(foreach d,$(SRCDIRS),-I$(d))
 
 vpath %.mod $(SRCDIRS)
@@ -23,7 +23,7 @@ vpath %.c $(SRCDIRS)
 
 PROGRAMS := mosaic
 
-MOSAIC_OBJS := mosaic.o Log.o
+MOSAIC_OBJS := mosaic.o Log.o XServer.o Atoms.o xglue.o sysglue.o
 
 all: $(PROGRAMS)
 
