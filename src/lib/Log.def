@@ -1,0 +1,12 @@
+DEFINITION MODULE Log ;
+
+(* unbuffered diagnostics, safe to use right before exit *)
+
+PROCEDURE SetProgram (name: ARRAY OF CHAR) ;
+PROCEDURE Out (s: ARRAY OF CHAR) ;
+PROCEDURE OutLn (s: ARRAY OF CHAR) ;
+PROCEDURE Error (s: ARRAY OF CHAR) ;
+PROCEDURE Error2 (s, detail: ARRAY OF CHAR) ;
+PROCEDURE ErrorErrno (s, detail: ARRAY OF CHAR) ;
+
+END Log.
