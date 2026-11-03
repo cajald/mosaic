@@ -1,0 +1,33 @@
+DEFINITION MODULE Str ;
+
+(* nul-terminated strings in fixed buffers; copies report overflow
+   instead of truncating silently *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+
+PROCEDURE Length (s: ARRAY OF CHAR) : CARDINAL ;
+PROCEDURE Equal (a, b: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Assign (src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Append (src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE AppendChar (c: CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
+
+(* copy a c string; FALSE when it does not fit *)
+PROCEDURE FromC (p: ADDRESS; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
+
+(* copy n bytes for display, cutting at a utf-8 boundary if needed *)
+PROCEDURE FromBytes (p: ADDRESS; n: CARDINAL; VAR dst: ARRAY OF CHAR) ;
+PROCEDURE Shorten (VAR s: ARRAY OF CHAR; n: CARDINAL) ;
+
+PROCEDURE StartsWith (s, prefix: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE EndsWith (s, suffix: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Lower (c: CHAR) : CHAR ;
+
+(* case-insensitive for ascii: <0, 0, >0 *)
+PROCEDURE Compare (a, b: ARRAY OF CHAR) : INTEGER ;
+PROCEDURE ContainsNoCase (s, part: ARRAY OF CHAR) : BOOLEAN ;
+
+PROCEDURE IntToStr (n: LONGINT; VAR s: ARRAY OF CHAR) ;
+PROCEDURE StrToInt (s: ARRAY OF CHAR; VAR n: INTEGER) : BOOLEAN ;
+PROCEDURE Trim (VAR s: ARRAY OF CHAR) ;
+
+END Str.

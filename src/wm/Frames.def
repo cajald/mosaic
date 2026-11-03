@@ -1,0 +1,33 @@
+DEFINITION MODULE Frames ;
+
+(* the frame window around each client: geometry and decorations *)
+
+FROM Clients IMPORT Client ;
+
+CONST
+  Border = 4 ;
+  TitleHeight = 20 ;
+
+PROCEDURE Left (c: Client) : INTEGER ;
+PROCEDURE Top (c: Client) : INTEGER ;
+
+(* total decoration width and height *)
+PROCEDURE ExtraWidth (c: Client) : INTEGER ;
+PROCEDURE ExtraHeight (c: Client) : INTEGER ;
+
+PROCEDURE Create (c: Client) ;
+
+(* give the client back to the root at its current position *)
+PROCEDURE Release (c: Client; clientAlive: BOOLEAN) ;
+
+(* push c^.x, y, width, height to the server *)
+PROCEDURE Apply (c: Client) ;
+
+(* clamp a client size to its hints *)
+PROCEDURE Constrain (c: Client; VAR width, height: INTEGER) ;
+
+PROCEDURE Draw (c: Client; active: BOOLEAN) ;
+
+PROCEDURE SetExtents (c: Client) ;
+
+END Frames.

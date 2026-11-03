@@ -5,7 +5,7 @@ FROM Args IMPORT GetArg, Narg ;
 FROM libc IMPORT exit ;
 FROM Posix IMPORT mx_watch_signals, mx_take_signal, mx_init_locale ;
 FROM XGlue IMPORT Event ;
-IMPORT Log, XServer, Atoms ;
+IMPORT Log, XServer, Atoms, Wm ;
 
 CONST
   Version = "0.1" ;
@@ -13,7 +13,6 @@ CONST
 VAR
   arg: ARRAY [0..255] OF CHAR ;
   event: Event ;
-  running: BOOLEAN ;
 
 BEGIN
   Log.SetProgram ("mosaic") ;
@@ -34,17 +33,22 @@ BEGIN
     exit (1)
   END ;
   Atoms.Init ;
-  running := TRUE ;
-  WHILE running DO
-    IF XServer.WaitEvent (1000)
+  IF NOT Wm.Start ()
+  THEN
+    XServer.Close ;
+    exit (1)
+  END ;
+  WHILE NOT Wm.quit DO
+    IF XServer.WaitEvent (1000) AND XServer.NextEvent (event)
     THEN
-      IF XServer.NextEvent (event) THEN END
+      Wm.Handle (event)
     END ;
     IF mx_take_signal () # 0
     THEN
-      running := FALSE
+      Wm.quit := TRUE
     END
   END ;
+  Wm.Stop ;
   XServer.Close ;
   exit (0)
 END mosaic.

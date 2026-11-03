@@ -13,6 +13,7 @@ VAR
   NetCloseWindow, NetWmName, NetWmVisibleName, NetWmDesktop, NetWmState,
   NetWmStateFullscreen, NetWmStateHidden, NetWmStateMaximizedVert,
   NetWmStateMaximizedHorz, NetWmStateModal, NetWmStateDemandsAttention,
+  NetWmStateSkipTaskbar, NetWmStateSkipPager,
   NetWmWindowType, NetWmWindowTypeDock, NetWmWindowTypeDesktop,
   NetWmWindowTypeDialog, NetWmWindowTypeSplash, NetWmWindowTypeUtility,
   NetWmWindowTypeNormal, NetWmStrut, NetWmStrutPartial, NetFrameExtents,

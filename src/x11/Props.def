@@ -1,0 +1,27 @@
+DEFINITION MODULE Props ;
+
+(* typed access to window properties *)
+
+FROM Xlib IMPORT Window, Atom ;
+
+PROCEDURE GetCardinals (w: Window; property, type: Atom;
+                        VAR values: ARRAY OF LONGCARD) : CARDINAL ;
+PROCEDURE GetCardinal (w: Window; property, type: Atom;
+                       VAR value: LONGCARD) : BOOLEAN ;
+PROCEDURE SetCardinals (w: Window; property, type: Atom;
+                        VAR values: ARRAY OF LONGCARD; n: CARDINAL) ;
+PROCEDURE SetCardinal (w: Window; property, type: Atom; value: LONGCARD) ;
+
+(* window title: _NET_WM_NAME, falling back to WM_NAME *)
+PROCEDURE GetTitle (w: Window; VAR title: ARRAY OF CHAR) : BOOLEAN ;
+
+(* any STRING or UTF8_STRING property as utf-8 *)
+PROCEDURE GetText (w: Window; property: Atom;
+                   VAR text: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE SetText (w: Window; property: Atom; text: ARRAY OF CHAR) ;
+
+(* nul-separated utf-8 list such as _NET_DESKTOP_NAMES *)
+PROCEDURE SetTextList (w: Window; property: Atom; VAR data: ARRAY OF CHAR;
+                       len: CARDINAL) ;
+
+END Props.

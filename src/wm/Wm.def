@@ -1,0 +1,15 @@
+DEFINITION MODULE Wm ;
+
+FROM XGlue IMPORT Event ;
+
+VAR
+  quit: BOOLEAN ;
+
+(* take over the screen; FALSE if another window manager runs *)
+PROCEDURE Start () : BOOLEAN ;
+PROCEDURE Handle (VAR e: Event) ;
+
+(* return every client to the root and drop our root properties *)
+PROCEDURE Stop ;
+
+END Wm.

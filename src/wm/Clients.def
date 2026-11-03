@@ -1,0 +1,48 @@
+DEFINITION MODULE Clients ;
+
+(* managed windows and the three orders they live in: management
+   order, stacking order (top first) and focus history (recent first) *)
+
+FROM Xlib IMPORT Window ;
+
+CONST
+  AllDesktops = -1 ;
+  TitleLength = 256 ;
+
+TYPE
+  Kind = (Normal, Dialog, Dock, DesktopKind) ;
+
+  Client = POINTER TO ClientRec ;
+  ClientRec = RECORD
+    window, frame: Window ;
+    kind: Kind ;
+    (* frame position and client size *)
+    x, y, width, height: INTEGER ;
+    savedX, savedY, savedWidth, savedHeight: INTEGER ;
+    minWidth, minHeight, maxWidth, maxHeight: INTEGER ;
+    incWidth, incHeight, baseWidth, baseHeight: INTEGER ;
+    desktop: INTEGER ;
+    title: ARRAY [0..TitleLength - 1] OF CHAR ;
+    transientFor: Window ;
+    acceptsInput, takeFocus, deleteWindow: BOOLEAN ;
+    decorated, minimized, maximized, fullscreen, urgent: BOOLEAN ;
+    skipTaskbar, skipPager: BOOLEAN ;
+    strut: ARRAY [0..3] OF INTEGER ;
+    next, stackNext, focusNext: Client ;
+  END ;
+
+VAR
+  first, stackTop, focusFirst: Client ;
+  count: CARDINAL ;
+
+PROCEDURE New (w: Window) : Client ;
+PROCEDURE Remove (c: Client) ;
+PROCEDURE Find (w: Window) : Client ;
+PROCEDURE FindFrame (w: Window) : Client ;
+
+(* move c to the top of the stack or the front of the focus history *)
+PROCEDURE Raise (c: Client) ;
+PROCEDURE Lower (c: Client) ;
+PROCEDURE Touch (c: Client) ;
+
+END Clients.

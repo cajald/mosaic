@@ -167,7 +167,8 @@ static int log_error(Display *dpy, XErrorEvent *e)
 
 	error_count++;
 	last_error = e->error_code;
-	if (verbose_errors) {
+	/* windows vanish between our requests; that race is routine */
+	if (verbose_errors && e->error_code != BadWindow) {
 		XGetErrorText(dpy, e->error_code, text, sizeof text);
 		fprintf(stderr, "mosaic: x error: %s (request %d.%d, resource 0x%lx)\n",
 			text, e->request_code, e->minor_code, e->resourceid);
@@ -228,13 +229,14 @@ int mx_window_attrs(Display *dpy, Window w, int *x, int *y, int *width,
 	return 1;
 }
 
-/* out: min w/h, max w/h, inc w/h, base w/h; zero means unset */
-int mx_size_hints(Display *dpy, Window w, int out[8])
+/* out: min w/h, max w/h, inc w/h, base w/h, user position;
+   zero means unset */
+int mx_size_hints(Display *dpy, Window w, int out[9])
 {
 	XSizeHints h;
 	long supplied;
 
-	memset(out, 0, 8 * sizeof(int));
+	memset(out, 0, 9 * sizeof(int));
 	if (!XGetWMNormalHints(dpy, w, &h, &supplied))
 		return 0;
 	if (h.flags & PMinSize) { out[0] = h.min_width; out[1] = h.min_height; }
@@ -242,6 +244,7 @@ int mx_size_hints(Display *dpy, Window w, int out[8])
 	if (h.flags & PResizeInc) { out[4] = h.width_inc; out[5] = h.height_inc; }
 	if (h.flags & PBaseSize) { out[6] = h.base_width; out[7] = h.base_height; }
 	else if (h.flags & PMinSize) { out[6] = h.min_width; out[7] = h.min_height; }
+	if (h.flags & USPosition) out[8] = 1;
 	return 1;
 }
 

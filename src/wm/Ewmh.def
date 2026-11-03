@@ -1,0 +1,21 @@
+DEFINITION MODULE Ewmh ;
+
+(* root window properties published by the window manager *)
+
+FROM Xlib IMPORT Window ;
+FROM Clients IMPORT Client ;
+
+VAR
+  checkWindow: Window ;
+
+PROCEDURE Setup (desktops: INTEGER) ;
+PROCEDURE Teardown ;
+PROCEDURE UpdateClientList ;
+PROCEDURE SetActive (w: Window) ;
+PROCEDURE SetDesktops (count, current: INTEGER) ;
+PROCEDURE SetWorkarea (desktops, x, y, width, height: INTEGER) ;
+PROCEDURE SetClientDesktop (c: Client) ;
+PROCEDURE SetClientState (c: Client) ;
+PROCEDURE ClearClient (c: Client) ;
+
+END Ewmh.

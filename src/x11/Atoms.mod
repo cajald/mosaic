@@ -40,6 +40,8 @@ BEGIN
   NetWmStateMaximizedHorz := Get ("_NET_WM_STATE_MAXIMIZED_HORZ") ;
   NetWmStateModal := Get ("_NET_WM_STATE_MODAL") ;
   NetWmStateDemandsAttention := Get ("_NET_WM_STATE_DEMANDS_ATTENTION") ;
+  NetWmStateSkipTaskbar := Get ("_NET_WM_STATE_SKIP_TASKBAR") ;
+  NetWmStateSkipPager := Get ("_NET_WM_STATE_SKIP_PAGER") ;
   NetWmWindowType := Get ("_NET_WM_WINDOW_TYPE") ;
   NetWmWindowTypeDock := Get ("_NET_WM_WINDOW_TYPE_DOCK") ;
   NetWmWindowTypeDesktop := Get ("_NET_WM_WINDOW_TYPE_DESKTOP") ;
