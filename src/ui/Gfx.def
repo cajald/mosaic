@@ -1,0 +1,54 @@
+DEFINITION MODULE Gfx ;
+
+(* the mosaic look: palette, fonts and drawing on windows *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+FROM Xlib IMPORT Window, Drawable ;
+FROM Xft IMPORT XftFontPtr ;
+
+TYPE
+  Color = (Desk, DeskTile, Face, Light, Shadow, Dark, Ink, InkDim,
+           Accent, AccentInk, Idle, IdleInk, Field, Select, SelectInk,
+           Alert) ;
+
+  Surface = POINTER TO SurfaceRec ;
+  SurfaceRec = RECORD
+    window: Window ;
+    target: Drawable ;
+    draw: ADDRESS ;
+    width, height: INTEGER ;
+    buffered: BOOLEAN ;
+  END ;
+
+VAR
+  font, bold: XftFontPtr ;
+  lineHeight: INTEGER ;
+
+PROCEDURE Init () : BOOLEAN ;
+PROCEDURE Done ;
+PROCEDURE Pixel (c: Color) : LONGCARD ;
+
+(* a buffered surface draws to a pixmap and shows it on Flush *)
+PROCEDURE NewSurface (w: Window; buffered: BOOLEAN) : Surface ;
+PROCEDURE Resize (s: Surface; width, height: INTEGER) ;
+PROCEDURE FreeSurface (VAR s: Surface) ;
+PROCEDURE Flush (s: Surface) ;
+
+PROCEDURE Fill (s: Surface; x, y, w, h: INTEGER; c: Color) ;
+PROCEDURE Outline (s: Surface; x, y, w, h: INTEGER; c: Color) ;
+PROCEDURE Line (s: Surface; x1, y1, x2, y2: INTEGER; c: Color) ;
+PROCEDURE Bevel (s: Surface; x, y, w, h: INTEGER; raised: BOOLEAN) ;
+
+(* a framed, beveled control face *)
+PROCEDURE Button (s: Surface; x, y, w, h: INTEGER; pressed: BOOLEAN) ;
+
+(* y is the top of the line box *)
+PROCEDURE Text (s: Surface; x, y: INTEGER; text: ARRAY OF CHAR; c: Color;
+                strong: BOOLEAN) ;
+
+(* like Text but ends in an ellipsis when wider than maxWidth *)
+PROCEDURE TextClip (s: Surface; x, y, maxWidth: INTEGER;
+                    text: ARRAY OF CHAR; c: Color; strong: BOOLEAN) ;
+PROCEDURE TextWidth (text: ARRAY OF CHAR; strong: BOOLEAN) : INTEGER ;
+
+END Gfx.

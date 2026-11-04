@@ -8,6 +8,10 @@ CONST
   Border = 4 ;
   TitleHeight = 20 ;
 
+TYPE
+  Part = (Nowhere, TitleBar, CloseBox, MinimizeBox, MaximizeBox,
+          EdgeN, EdgeS, EdgeE, EdgeW, EdgeNE, EdgeNW, EdgeSE, EdgeSW) ;
+
 PROCEDURE Left (c: Client) : INTEGER ;
 PROCEDURE Top (c: Client) : INTEGER ;
 
@@ -27,6 +31,12 @@ PROCEDURE Apply (c: Client) ;
 PROCEDURE Constrain (c: Client; VAR width, height: INTEGER) ;
 
 PROCEDURE Draw (c: Client; active: BOOLEAN) ;
+
+(* show a title button held down, or none with Nowhere *)
+PROCEDURE SetPressed (c: Client; part: Part) ;
+
+(* which part of the frame is at frame-relative x, y *)
+PROCEDURE HitTest (c: Client; x, y: INTEGER) : Part ;
 
 PROCEDURE SetExtents (c: Client) ;
 

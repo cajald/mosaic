@@ -1,0 +1,19 @@
+DEFINITION MODULE Keys ;
+
+(* global keyboard shortcuts grabbed on the root window *)
+
+TYPE
+  Action = (NoAction, CycleNext, CyclePrev, CloseWindow, MinimizeWindow,
+            MaximizeWindow, FullscreenWindow, DesktopNext, DesktopPrev,
+            GotoDesktop, SendNext, SendPrev, OpenLauncher, OpenTerminal,
+            OpenFiles) ;
+
+PROCEDURE Grab ;
+
+(* action bound to a key press, with its argument for GotoDesktop *)
+PROCEDURE Lookup (code, state: CARDINAL; VAR arg: INTEGER) : Action ;
+
+(* is keycode the alt key that ends window cycling *)
+PROCEDURE IsCycleModifier (keycode: CARDINAL) : BOOLEAN ;
+
+END Keys.

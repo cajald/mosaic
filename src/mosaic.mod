@@ -5,7 +5,7 @@ FROM Args IMPORT GetArg, Narg ;
 FROM libc IMPORT exit ;
 FROM Posix IMPORT mx_watch_signals, mx_take_signal, mx_init_locale ;
 FROM XGlue IMPORT Event ;
-IMPORT Log, XServer, Atoms, Wm ;
+IMPORT Log, XServer, Atoms, Config, Gfx, Wm ;
 
 CONST
   Version = "0.1" ;
@@ -32,9 +32,11 @@ BEGIN
   THEN
     exit (1)
   END ;
+  Config.Load ;
   Atoms.Init ;
-  IF NOT Wm.Start ()
+  IF NOT (Gfx.Init () AND Wm.Start ())
   THEN
+    Gfx.Done ;
     XServer.Close ;
     exit (1)
   END ;
@@ -49,6 +51,7 @@ BEGIN
     END
   END ;
   Wm.Stop ;
+  Gfx.Done ;
   XServer.Close ;
   exit (0)
 END mosaic.

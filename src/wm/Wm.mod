@@ -6,7 +6,10 @@ FROM Xlib IMPORT Window, Atom, Time, None, CurrentTime, False,
                  XSetInputFocus, XGrabButton, XUngrabButton, XAllowEvents,
                  XGetTransientForHint, XGetWMProtocols, XFree, XKillClient,
                  XQueryTree, XGrabServer, XUngrabServer, XSync,
-                 XMoveResizeWindow,
+                 XGrabPointer, XUngrabPointer, XGrabKeyboard, XUngrabKeyboard,
+                 XQueryKeymap, XCreateFontCursor, XDefineCursor, XFreeCursor,
+                 Cursor, Mod1Mask, LockMask, ButtonMotionMask,
+                 ButtonReleaseMask, PointerMotionMask, GrabSuccess, True,
                  MapRequest, UnmapNotify, DestroyNotify, ConfigureRequest,
                  PropertyNotify, ClientMessage, ButtonPress, Expose,
                  KeyPress, KeyRelease, ButtonRelease, MotionNotify,
@@ -20,11 +23,14 @@ FROM Xlib IMPORT Window, Atom, Time, None, CurrentTime, False,
                  XA_WM_NAME, XA_WM_HINTS, XA_WM_NORMAL_HINTS,
                  XA_WM_TRANSIENT_FOR ;
 FROM XGlue IMPORT Event, mx_become_wm, mx_window_attrs, mx_size_hints,
-                  mx_wm_hints, mx_configure_window, mx_send_client_message ;
+                  mx_wm_hints, mx_configure_window, mx_send_client_message,
+                  mx_compress_motion, mx_numlock_mask ;
 FROM XServer IMPORT dpy, root, width, height ;
 FROM Clients IMPORT Client, Kind, AllDesktops ;
 FROM Storage IMPORT ALLOCATE, DEALLOCATE ;
-IMPORT Clients, Frames, Ewmh, Atoms, Props, Log ;
+FROM Frames IMPORT Part ;
+FROM Keys IMPORT Action ;
+IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Log ;
 
 CONST
   RootMask = SubstructureRedirectMask + SubstructureNotifyMask +
@@ -32,9 +38,15 @@ CONST
   ClientMask = PropertyChangeMask + FocusChangeMask ;
   MotifDecorations = 2 ;
   CascadeStep = 24 ;
+  DoubleClickTime = 400 ;
+  DragMask = ButtonMotionMask + ButtonReleaseMask + PointerMotionMask ;
+  StateRemove = 0 ;
+  StateAdd = 1 ;
+  StateToggle = 2 ;
 
 TYPE
   Longs = POINTER TO ARRAY [0..65535] OF LONGCARD ;
+  DragMode = (DragNone, DragMove, DragResize, DragBox) ;
 
 VAR
   focused: Client ;
@@ -43,6 +55,16 @@ VAR
   cascade: INTEGER ;
   lastTime: Time ;
   scanning: BOOLEAN ;
+  cycling: BOOLEAN ;
+  drag: DragMode ;
+  dragClient: Client ;
+  dragPart: Part ;
+  dragX, dragY, origX, origY, origWidth, origHeight: INTEGER ;
+  titleClickClient: Client ;
+  titleClickTime: Time ;
+  hoverFrame: Client ;
+  hoverPart: Part ;
+  cursors: ARRAY Part OF Cursor ;
 
 PROCEDURE HasBit (mask: LONGCARD; bit: LONGCARD) : BOOLEAN ;
 BEGIN
@@ -189,7 +211,10 @@ BEGIN
     Ewmh.SetActive (None) ;
     RETURN
   END ;
-  Clients.Touch (c) ;
+  IF NOT cycling
+  THEN
+    Clients.Touch (c)
+  END ;
   IF c^.urgent
   THEN
     c^.urgent := FALSE ;
@@ -513,8 +538,9 @@ BEGIN
   Place (c) ;
   Frames.Create (c) ;
   Frames.Apply (c) ;
-  Frames.Draw (c, FALSE) ;
   GrabClicks (c) ;
+  GrabFrameButtons (c) ;
+  ReadInitialState (c) ;
   IF c^.minimized
   THEN
     SetWmState (c, IconicState)
@@ -537,6 +563,12 @@ VAR
 BEGIN
   wasFocused := c = focused ;
   wasDock := c^.kind = Dock ;
+  IF dragClient = c
+  THEN
+    EndDrag
+  END ;
+  IF hoverFrame = c THEN hoverFrame := NIL END ;
+  IF titleClickClient = c THEN titleClickClient := NIL END ;
   IF wasFocused
   THEN
     focused := NIL
@@ -566,18 +598,569 @@ BEGIN
   END
 END Unmanage ;
 
+PROCEDURE SetMinimized (c: Client; on: BOOLEAN) ;
+VAR
+  t: Client ;
+BEGIN
+  IF (NOT Reparented (c)) OR (c^.minimized = on)
+  THEN
+    RETURN
+  END ;
+  c^.minimized := on ;
+  IF on
+  THEN
+    SetWmState (c, IconicState)
+  ELSE
+    SetWmState (c, NormalState)
+  END ;
+  Ewmh.SetClientState (c) ;
+  Show (c) ;
+  (* dialogs follow their owner *)
+  t := Clients.first ;
+  WHILE t # NIL DO
+    IF (t^.transientFor = c^.window) AND (t # c)
+    THEN
+      SetMinimized (t, on)
+    END ;
+    t := t^.next
+  END ;
+  IF on AND (c = focused)
+  THEN
+    FocusFallback
+  END
+END SetMinimized ;
+
 PROCEDURE Activate (c: Client) ;
 BEGIN
-  IF c^.minimized
-  THEN
-    c^.minimized := FALSE ;
-    SetWmState (c, NormalState) ;
-    Ewmh.SetClientState (c) ;
-    Show (c)
-  END ;
+  SetMinimized (c, FALSE) ;
   RaiseClient (c) ;
   Focus (c)
 END Activate ;
+
+PROCEDURE SaveGeometry (c: Client) ;
+BEGIN
+  c^.savedX := c^.x ;
+  c^.savedY := c^.y ;
+  c^.savedWidth := c^.width ;
+  c^.savedHeight := c^.height
+END SaveGeometry ;
+
+PROCEDURE RestoreGeometry (c: Client) ;
+BEGIN
+  IF c^.savedWidth > 0
+  THEN
+    c^.x := c^.savedX ;
+    c^.y := c^.savedY ;
+    c^.width := c^.savedWidth ;
+    c^.height := c^.savedHeight
+  END
+END RestoreGeometry ;
+
+PROCEDURE MaximizedGeometry (c: Client) ;
+VAR
+  w, h: INTEGER ;
+BEGIN
+  w := workWidth - Frames.ExtraWidth (c) ;
+  h := workHeight - Frames.ExtraHeight (c) ;
+  Frames.Constrain (c, w, h) ;
+  c^.width := w ;
+  c^.height := h ;
+  c^.x := workX ;
+  c^.y := workY
+END MaximizedGeometry ;
+
+PROCEDURE SetMaximized (c: Client; on: BOOLEAN) ;
+BEGIN
+  IF (NOT Reparented (c)) OR (c^.maximized = on)
+  THEN
+    RETURN
+  END ;
+  c^.maximized := on ;
+  IF NOT c^.fullscreen
+  THEN
+    IF on
+    THEN
+      SaveGeometry (c) ;
+      MaximizedGeometry (c)
+    ELSE
+      RestoreGeometry (c)
+    END ;
+    Frames.Apply (c) ;
+    Frames.Draw (c, c = focused)
+  END ;
+  Ewmh.SetClientState (c)
+END SetMaximized ;
+
+PROCEDURE SetFullscreen (c: Client; on: BOOLEAN) ;
+BEGIN
+  IF (NOT Reparented (c)) OR (c^.fullscreen = on)
+  THEN
+    RETURN
+  END ;
+  IF on
+  THEN
+    IF NOT c^.maximized
+    THEN
+      SaveGeometry (c)
+    END ;
+    c^.fullscreen := TRUE ;
+    c^.x := 0 ;
+    c^.y := 0 ;
+    c^.width := width ;
+    c^.height := height
+  ELSE
+    c^.fullscreen := FALSE ;
+    IF c^.maximized
+    THEN
+      MaximizedGeometry (c)
+    ELSE
+      RestoreGeometry (c)
+    END
+  END ;
+  Frames.Apply (c) ;
+  Frames.SetExtents (c) ;
+  Frames.Draw (c, c = focused) ;
+  Ewmh.SetClientState (c) ;
+  Restack
+END SetFullscreen ;
+
+PROCEDURE Wanted (action: LONGINT; current: BOOLEAN) : BOOLEAN ;
+BEGIN
+  CASE action OF
+    StateRemove: RETURN FALSE |
+    StateAdd: RETURN TRUE |
+    StateToggle: RETURN NOT current
+  ELSE
+    RETURN current
+  END
+END Wanted ;
+
+PROCEDURE ChangeState (c: Client; action: LONGINT; prop: Atom;
+                       VAR maximizeDone: BOOLEAN) ;
+BEGIN
+  IF prop = None
+  THEN
+    RETURN
+  ELSIF prop = Atoms.NetWmStateFullscreen
+  THEN
+    SetFullscreen (c, Wanted (action, c^.fullscreen))
+  ELSIF (prop = Atoms.NetWmStateMaximizedVert) OR
+        (prop = Atoms.NetWmStateMaximizedHorz)
+  THEN
+    (* both axes are maximized together *)
+    IF NOT maximizeDone
+    THEN
+      SetMaximized (c, Wanted (action, c^.maximized)) ;
+      maximizeDone := TRUE
+    END
+  ELSIF prop = Atoms.NetWmStateHidden
+  THEN
+    SetMinimized (c, Wanted (action, c^.minimized))
+  ELSIF prop = Atoms.NetWmStateDemandsAttention
+  THEN
+    c^.urgent := Wanted (action, c^.urgent) AND (c # focused)
+  ELSIF prop = Atoms.NetWmStateSkipTaskbar
+  THEN
+    c^.skipTaskbar := Wanted (action, c^.skipTaskbar)
+  ELSIF prop = Atoms.NetWmStateSkipPager
+  THEN
+    c^.skipPager := Wanted (action, c^.skipPager)
+  END
+END ChangeState ;
+
+(* apply _NET_WM_STATE requested before the window was mapped *)
+PROCEDURE ReadInitialState (c: Client) ;
+VAR
+  states: ARRAY [0..15] OF LONGCARD ;
+  n, i: CARDINAL ;
+  done: BOOLEAN ;
+BEGIN
+  n := Props.GetCardinals (c^.window, Atoms.NetWmState, XA_ATOM, states) ;
+  done := FALSE ;
+  FOR i := 1 TO n DO
+    IF states[i - 1] # Atoms.NetWmStateHidden
+    THEN
+      ChangeState (c, StateAdd, states[i - 1], done)
+    END
+  END
+END ReadInitialState ;
+
+PROCEDURE GrabFrameButtons (c: Client) ;
+VAR
+  numlock: CARDINAL ;
+  mods: ARRAY [0..3] OF CARDINAL ;
+  i, b: CARDINAL ;
+BEGIN
+  numlock := mx_numlock_mask (dpy) ;
+  mods[0] := Mod1Mask ;
+  mods[1] := Mod1Mask + LockMask ;
+  mods[2] := Mod1Mask + numlock ;
+  mods[3] := Mod1Mask + numlock + LockMask ;
+  FOR i := 0 TO 3 DO
+    IF (i < 2) OR (numlock # 0)
+    THEN
+      FOR b := 1 TO 3 BY 2 DO
+        IF XGrabButton (dpy, b, mods[i], c^.frame, False,
+                        ButtonPressMask + ButtonReleaseMask,
+                        GrabModeAsync, GrabModeAsync, None, None) = 0 THEN END
+      END
+    END
+  END
+END GrabFrameButtons ;
+
+PROCEDURE EndDrag ;
+BEGIN
+  IF drag = DragNone
+  THEN
+    RETURN
+  END ;
+  IF drag = DragBox
+  THEN
+    Frames.SetPressed (NIL, Frames.Nowhere)
+  END ;
+  drag := DragNone ;
+  dragClient := NIL ;
+  IF XUngrabPointer (dpy, lastTime) = 0 THEN END
+END EndDrag ;
+
+PROCEDURE StartDrag (c: Client; mode: DragMode; part: Part; VAR e: Event) ;
+VAR
+  cursor: Cursor ;
+BEGIN
+  IF c^.fullscreen
+  THEN
+    RETURN
+  END ;
+  IF mode = DragMove
+  THEN
+    cursor := cursors[Frames.TitleBar]
+  ELSE
+    cursor := cursors[part]
+  END ;
+  IF XGrabPointer (dpy, root, False, DragMask, GrabModeAsync, GrabModeAsync,
+                   None, cursor, e.time) # GrabSuccess
+  THEN
+    RETURN
+  END ;
+  drag := mode ;
+  dragClient := c ;
+  dragPart := part ;
+  dragX := e.xRoot ;
+  dragY := e.yRoot ;
+  origX := c^.x ;
+  origY := c^.y ;
+  origWidth := c^.width ;
+  origHeight := c^.height ;
+  IF mode = DragBox
+  THEN
+    Frames.SetPressed (c, part)
+  END
+END StartDrag ;
+
+PROCEDURE DragMoved (VAR e: Event) ;
+VAR
+  c: Client ;
+  dx, dy, w, h: INTEGER ;
+  north, south, east, west: BOOLEAN ;
+BEGIN
+  c := dragClient ;
+  dx := e.xRoot - dragX ;
+  dy := e.yRoot - dragY ;
+  IF c^.maximized AND (drag # DragBox) AND ((dx # 0) OR (dy # 0))
+  THEN
+    (* a moved or resized maximized window keeps its current size *)
+    c^.maximized := FALSE ;
+    Ewmh.SetClientState (c)
+  END ;
+  CASE drag OF
+    DragMove:
+      c^.x := origX + dx ;
+      c^.y := origY + dy ;
+      (* the title bar must stay reachable *)
+      IF c^.y < workY THEN c^.y := workY END ;
+      IF c^.y > height - Frames.Top (c) THEN c^.y := height - Frames.Top (c) END ;
+      Frames.Apply (c) |
+    DragResize:
+      north := (dragPart = Frames.EdgeN) OR (dragPart = Frames.EdgeNE) OR
+               (dragPart = Frames.EdgeNW) ;
+      south := (dragPart = Frames.EdgeS) OR (dragPart = Frames.EdgeSE) OR
+               (dragPart = Frames.EdgeSW) ;
+      west := (dragPart = Frames.EdgeW) OR (dragPart = Frames.EdgeNW) OR
+              (dragPart = Frames.EdgeSW) ;
+      east := (dragPart = Frames.EdgeE) OR (dragPart = Frames.EdgeNE) OR
+              (dragPart = Frames.EdgeSE) ;
+      w := origWidth ;
+      h := origHeight ;
+      IF east THEN w := origWidth + dx END ;
+      IF west THEN w := origWidth - dx END ;
+      IF south THEN h := origHeight + dy END ;
+      IF north THEN h := origHeight - dy END ;
+      Frames.Constrain (c, w, h) ;
+      c^.width := w ;
+      c^.height := h ;
+      c^.x := origX ;
+      c^.y := origY ;
+      IF west THEN c^.x := origX + origWidth - w END ;
+      IF north THEN c^.y := origY + origHeight - h END ;
+      Frames.Apply (c) ;
+      Frames.Draw (c, c = focused) |
+    DragBox:
+      IF Frames.HitTest (c, e.xRoot - c^.x, e.yRoot - c^.y) = dragPart
+      THEN
+        Frames.SetPressed (c, dragPart)
+      ELSE
+        Frames.SetPressed (NIL, Frames.Nowhere)
+      END
+  ELSE
+  END
+END DragMoved ;
+
+PROCEDURE DragReleased (VAR e: Event) ;
+VAR
+  c: Client ;
+  part: Part ;
+BEGIN
+  c := dragClient ;
+  part := dragPart ;
+  IF (drag = DragBox) AND
+     (Frames.HitTest (c, e.xRoot - c^.x, e.yRoot - c^.y) = part)
+  THEN
+    EndDrag ;
+    CASE part OF
+      Frames.CloseBox: Close (c) |
+      Frames.MinimizeBox: SetMinimized (c, TRUE) |
+      Frames.MaximizeBox: SetMaximized (c, NOT c^.maximized)
+    ELSE
+    END
+  ELSE
+    EndDrag
+  END
+END DragReleased ;
+
+(* edge nearest to the pointer, for alt + right button resizing *)
+PROCEDURE NearestCorner (c: Client; x, y: INTEGER) : Part ;
+VAR
+  left, top: BOOLEAN ;
+BEGIN
+  left := x < (c^.width + Frames.ExtraWidth (c)) DIV 2 ;
+  top := y < (c^.height + Frames.ExtraHeight (c)) DIV 2 ;
+  IF top AND left THEN RETURN Frames.EdgeNW END ;
+  IF top THEN RETURN Frames.EdgeNE END ;
+  IF left THEN RETURN Frames.EdgeSW END ;
+  RETURN Frames.EdgeSE
+END NearestCorner ;
+
+PROCEDURE FramePress (c: Client; VAR e: Event) ;
+VAR
+  part: Part ;
+BEGIN
+  Activate (c) ;
+  IF HasBit (e.state, Mod1Mask)
+  THEN
+    IF e.detail = 1
+    THEN
+      StartDrag (c, DragMove, Frames.TitleBar, e)
+    ELSIF (e.detail = 3) AND NOT c^.fullscreen
+    THEN
+      StartDrag (c, DragResize, NearestCorner (c, e.x, e.y), e)
+    END ;
+    RETURN
+  END ;
+  part := Frames.HitTest (c, e.x, e.y) ;
+  IF e.detail = 3
+  THEN
+    IF part = Frames.TitleBar
+    THEN
+      Clients.Lower (c) ;
+      Restack
+    END ;
+    RETURN
+  END ;
+  IF e.detail # 1
+  THEN
+    RETURN
+  END ;
+  CASE part OF
+    Frames.TitleBar:
+      IF (titleClickClient = c) AND (e.time - titleClickTime < DoubleClickTime)
+      THEN
+        titleClickClient := NIL ;
+        SetMaximized (c, NOT c^.maximized)
+      ELSE
+        titleClickClient := c ;
+        titleClickTime := e.time ;
+        StartDrag (c, DragMove, part, e)
+      END |
+    Frames.CloseBox, Frames.MinimizeBox, Frames.MaximizeBox:
+      StartDrag (c, DragBox, part, e) |
+    Frames.Nowhere:
+  ELSE
+    StartDrag (c, DragResize, part, e)
+  END
+END FramePress ;
+
+PROCEDURE Hover (VAR e: Event) ;
+VAR
+  c: Client ;
+  part: Part ;
+BEGIN
+  c := Clients.FindFrame (e.window) ;
+  IF (c = NIL) OR NOT Reparented (c)
+  THEN
+    RETURN
+  END ;
+  part := Frames.HitTest (c, e.x, e.y) ;
+  IF (part >= Frames.EdgeN) AND NOT c^.fullscreen
+  THEN
+  ELSE
+    part := Frames.Nowhere
+  END ;
+  IF (c # hoverFrame) OR (part # hoverPart)
+  THEN
+    hoverFrame := c ;
+    hoverPart := part ;
+    IF XDefineCursor (dpy, c^.frame, cursors[part]) = 0 THEN END
+  END
+END Hover ;
+
+PROCEDURE OnMotionNotify (VAR e: Event) ;
+BEGIN
+  mx_compress_motion (dpy, e) ;
+  IF drag # DragNone
+  THEN
+    DragMoved (e)
+  ELSE
+    Hover (e)
+  END
+END OnMotionNotify ;
+
+PROCEDURE Eligible (c: Client) : BOOLEAN ;
+BEGIN
+  RETURN Visible (c) AND (c^.kind # Dock) AND (c^.kind # DesktopKind)
+END Eligible ;
+
+(* step through the focus history without reordering it *)
+PROCEDURE CycleStep (forward: BOOLEAN) ;
+VAR
+  c, target, prev: Client ;
+BEGIN
+  target := NIL ;
+  IF forward
+  THEN
+    IF focused # NIL THEN c := focused^.focusNext ELSE c := Clients.focusFirst END ;
+    WHILE (c # NIL) AND NOT Eligible (c) DO c := c^.focusNext END ;
+    IF c = NIL
+    THEN
+      c := Clients.focusFirst ;
+      WHILE (c # NIL) AND NOT Eligible (c) DO c := c^.focusNext END
+    END ;
+    target := c
+  ELSE
+    (* the last eligible client before the focused one, wrapping *)
+    prev := NIL ;
+    c := Clients.focusFirst ;
+    WHILE c # NIL DO
+      IF (c = focused) AND (prev # NIL)
+      THEN
+        target := prev
+      END ;
+      IF Eligible (c) AND (c # focused)
+      THEN
+        prev := c
+      END ;
+      c := c^.focusNext
+    END ;
+    IF target = NIL THEN target := prev END
+  END ;
+  IF (target # NIL) AND (target # focused)
+  THEN
+    RaiseClient (target) ;
+    Focus (target)
+  END
+END CycleStep ;
+
+PROCEDURE EndCycle ;
+BEGIN
+  IF NOT cycling
+  THEN
+    RETURN
+  END ;
+  cycling := FALSE ;
+  IF XUngrabKeyboard (dpy, lastTime) = 0 THEN END ;
+  IF focused # NIL
+  THEN
+    Clients.Touch (focused)
+  END
+END EndCycle ;
+
+PROCEDURE AltHeld () : BOOLEAN ;
+VAR
+  keys: ARRAY [0..31] OF CHAR ;
+  i: CARDINAL ;
+BEGIN
+  IF XQueryKeymap (dpy, keys) = 0 THEN END ;
+  FOR i := 8 TO 255 DO
+    IF ((i MOD 8) IN BITSET (ORD (keys[i DIV 8]))) AND
+       Keys.IsCycleModifier (i)
+    THEN
+      RETURN TRUE
+    END
+  END ;
+  RETURN FALSE
+END AltHeld ;
+
+PROCEDURE StartCycle (forward: BOOLEAN; VAR e: Event) ;
+BEGIN
+  IF (NOT cycling) AND
+     (XGrabKeyboard (dpy, root, True, GrabModeAsync, GrabModeAsync,
+                     e.time) = GrabSuccess)
+  THEN
+    cycling := TRUE
+  END ;
+  CycleStep (forward) ;
+  (* alt may have been released before the grab took effect *)
+  IF cycling AND NOT AltHeld ()
+  THEN
+    EndCycle
+  END
+END StartCycle ;
+
+PROCEDURE RunAction (action: Action; arg: INTEGER; VAR e: Event) ;
+BEGIN
+  CASE action OF
+    Keys.CycleNext: StartCycle (TRUE, e) |
+    Keys.CyclePrev: StartCycle (FALSE, e) |
+    Keys.CloseWindow: IF focused # NIL THEN Close (focused) END |
+    Keys.MinimizeWindow: IF focused # NIL THEN SetMinimized (focused, TRUE) END |
+    Keys.MaximizeWindow:
+      IF focused # NIL THEN SetMaximized (focused, NOT focused^.maximized) END |
+    Keys.FullscreenWindow:
+      IF focused # NIL THEN SetFullscreen (focused, NOT focused^.fullscreen) END
+  ELSE
+  END
+END RunAction ;
+
+PROCEDURE OnKeyPress (VAR e: Event) ;
+VAR
+  arg: INTEGER ;
+  action: Action ;
+BEGIN
+  arg := 0 ;
+  action := Keys.Lookup (e.detail, e.state, arg) ;
+  IF cycling AND (action # Keys.CycleNext) AND (action # Keys.CyclePrev)
+  THEN
+    EndCycle
+  END ;
+  RunAction (action, arg, e)
+END OnKeyPress ;
+
+PROCEDURE OnKeyRelease (VAR e: Event) ;
+BEGIN
+  IF cycling AND Keys.IsCycleModifier (e.detail)
+  THEN
+    EndCycle
+  END
+END OnKeyRelease ;
 
 PROCEDURE OnMapRequest (VAR e: Event) ;
 VAR
@@ -702,6 +1285,7 @@ PROCEDURE OnClientMessage (VAR e: Event) ;
 VAR
   c: Client ;
   ext: ARRAY [0..3] OF LONGCARD ;
+  done: BOOLEAN ;
 BEGIN
   IF e.atom = Atoms.MosaicCommand
   THEN
@@ -730,6 +1314,19 @@ BEGIN
   ELSIF e.atom = Atoms.NetCloseWindow
   THEN
     Close (c)
+  ELSIF e.atom = Atoms.WmChangeState
+  THEN
+    IF e.data[0] = IconicState
+    THEN
+      SetMinimized (c, TRUE)
+    END
+  ELSIF e.atom = Atoms.NetWmState
+  THEN
+    done := FALSE ;
+    ChangeState (c, e.data[0], e.data[1], done) ;
+    ChangeState (c, e.data[0], e.data[2], done) ;
+    Ewmh.SetClientState (c) ;
+    Frames.Draw (c, c = focused)
   END
 END OnClientMessage ;
 
@@ -745,12 +1342,24 @@ BEGIN
     IF XAllowEvents (dpy, ReplayPointer, e.time) = 0 THEN END ;
     RETURN
   END ;
-  c := Clients.FindFrame (e.window) ;
-  IF (c # NIL) AND Reparented (c)
+  IF cycling
   THEN
-    Activate (c)
+    EndCycle
+  END ;
+  c := Clients.FindFrame (e.window) ;
+  IF (c # NIL) AND Reparented (c) AND (drag = DragNone)
+  THEN
+    FramePress (c, e)
   END
 END OnButtonPress ;
+
+PROCEDURE OnButtonRelease (VAR e: Event) ;
+BEGIN
+  IF drag # DragNone
+  THEN
+    DragReleased (e)
+  END
+END OnButtonRelease ;
 
 PROCEDURE OnExpose (VAR e: Event) ;
 VAR
@@ -783,6 +1392,10 @@ BEGIN
     PropertyNotify: OnPropertyNotify (e) |
     ClientMessage: OnClientMessage (e) |
     ButtonPress: OnButtonPress (e) |
+    ButtonRelease: OnButtonRelease (e) |
+    MotionNotify: OnMotionNotify (e) |
+    KeyPress: OnKeyPress (e) |
+    KeyRelease: OnKeyRelease (e) |
     Expose: OnExpose (e)
   ELSE
   END
@@ -822,6 +1435,36 @@ BEGIN
   END
 END ScanExisting ;
 
+PROCEDURE CreateCursors ;
+BEGIN
+  cursors[Frames.Nowhere] := XCreateFontCursor (dpy, 68) ;
+  cursors[Frames.TitleBar] := XCreateFontCursor (dpy, 52) ;
+  cursors[Frames.CloseBox] := cursors[Frames.Nowhere] ;
+  cursors[Frames.MinimizeBox] := cursors[Frames.Nowhere] ;
+  cursors[Frames.MaximizeBox] := cursors[Frames.Nowhere] ;
+  cursors[Frames.EdgeN] := XCreateFontCursor (dpy, 138) ;
+  cursors[Frames.EdgeS] := XCreateFontCursor (dpy, 16) ;
+  cursors[Frames.EdgeE] := XCreateFontCursor (dpy, 96) ;
+  cursors[Frames.EdgeW] := XCreateFontCursor (dpy, 70) ;
+  cursors[Frames.EdgeNE] := XCreateFontCursor (dpy, 136) ;
+  cursors[Frames.EdgeNW] := XCreateFontCursor (dpy, 134) ;
+  cursors[Frames.EdgeSE] := XCreateFontCursor (dpy, 14) ;
+  cursors[Frames.EdgeSW] := XCreateFontCursor (dpy, 12)
+END CreateCursors ;
+
+PROCEDURE FreeCursors ;
+VAR
+  p: Part ;
+BEGIN
+  FOR p := Frames.Nowhere TO MAX (Part) DO
+    IF (p # Frames.CloseBox) AND (p # Frames.MinimizeBox) AND
+       (p # Frames.MaximizeBox)
+    THEN
+      IF XFreeCursor (dpy, cursors[p]) = 0 THEN END
+    END
+  END
+END FreeCursors ;
+
 PROCEDURE Start () : BOOLEAN ;
 BEGIN
   IF mx_become_wm (dpy, root, RootMask) = 0
@@ -831,6 +1474,9 @@ BEGIN
   END ;
   Ewmh.Setup (desktopCount) ;
   UpdateWorkarea ;
+  CreateCursors ;
+  IF XDefineCursor (dpy, root, cursors[Frames.Nowhere]) = 0 THEN END ;
+  Keys.Grab ;
   IF XGrabServer (dpy) = 0 THEN END ;
   ScanExisting ;
   IF XUngrabServer (dpy) = 0 THEN END ;
@@ -849,6 +1495,7 @@ BEGIN
   IF XSetInputFocus (dpy, 1 (* PointerRoot *), RevertToPointerRoot,
                      CurrentTime) = 0 THEN END ;
   Ewmh.Teardown ;
+  FreeCursors ;
   IF XSelectInput (dpy, root, 0) = 0 THEN END ;
   IF XSync (dpy, False) = 0 THEN END
 END Stop ;
@@ -860,5 +1507,12 @@ BEGIN
   desktopCount := 1 ;
   cascade := 0 ;
   lastTime := CurrentTime ;
-  scanning := FALSE
+  scanning := FALSE ;
+  cycling := FALSE ;
+  drag := DragNone ;
+  dragClient := NIL ;
+  titleClickClient := NIL ;
+  titleClickTime := 0 ;
+  hoverFrame := NIL ;
+  hoverPart := Frames.Nowhere
 END Wm.

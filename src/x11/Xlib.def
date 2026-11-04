@@ -46,7 +46,7 @@ EXPORT UNQUALIFIED
   XDrawRectangle, XDrawPoint, XCreatePixmap, XFreePixmap, XCopyArea,
   XQueryTree, XSetSelectionOwner, XGetSelectionOwner, XGrabServer,
   XUngrabServer, XAllowEvents, XQueryPointer, XSetTransientForHint,
-  XGetInputFocus, XGrabKeyboard, XUngrabKeyboard, XBell ;
+  XGetInputFocus, XGrabKeyboard, XUngrabKeyboard, XBell, XQueryKeymap ;
 
 TYPE
   Display = ADDRESS ;
@@ -285,5 +285,6 @@ PROCEDURE XQueryPointer (dpy: Display; w: Window; VAR root, child: Window;
                          VAR rootX, rootY, winX, winY: INTEGER;
                          VAR mask: CARDINAL) : INTEGER ;
 PROCEDURE XBell (dpy: Display; percent: INTEGER) : INTEGER ;
+PROCEDURE XQueryKeymap (dpy: Display; VAR keys: ARRAY OF CHAR) : INTEGER ;
 
 END Xlib.

@@ -1,0 +1,50 @@
+DEFINITION MODULE FOR "C" Xft ;
+
+(* libXft text rendering, layouts from X11/Xft/Xft.h *)
+
+FROM SYSTEM IMPORT ADDRESS, CARDINAL16, INTEGER16 ;
+FROM Xlib IMPORT Display, Drawable ;
+
+EXPORT UNQUALIFIED
+  XftFont, XftFontPtr, XftColor, XGlyphInfo,
+  XftFontOpenName, XftFontClose, XftDrawCreate, XftDrawChange,
+  XftDrawDestroy, XftColorAllocName, XftColorFree, XftDrawStringUtf8,
+  XftTextExtentsUtf8 ;
+
+TYPE
+  XftFont = RECORD
+    ascent, descent, height, maxAdvanceWidth: INTEGER ;
+    charset, pattern: ADDRESS ;
+  END ;
+  XftFontPtr = POINTER TO XftFont ;
+
+  XftColor = RECORD
+    pixel: LONGCARD ;
+    red, green, blue, alpha: CARDINAL16 ;
+  END ;
+
+  XGlyphInfo = RECORD
+    width, height: CARDINAL16 ;
+    x, y, xOff, yOff: INTEGER16 ;
+  END ;
+
+PROCEDURE XftFontOpenName (dpy: Display; screen: INTEGER;
+                           name: ARRAY OF CHAR) : XftFontPtr ;
+PROCEDURE XftFontClose (dpy: Display; font: XftFontPtr) ;
+PROCEDURE XftDrawCreate (dpy: Display; d: Drawable; visual: ADDRESS;
+                         colormap: LONGCARD) : ADDRESS ;
+PROCEDURE XftDrawChange (draw: ADDRESS; d: Drawable) ;
+PROCEDURE XftDrawDestroy (draw: ADDRESS) ;
+PROCEDURE XftColorAllocName (dpy: Display; visual: ADDRESS;
+                             colormap: LONGCARD; name: ARRAY OF CHAR;
+                             VAR result: XftColor) : INTEGER ;
+PROCEDURE XftColorFree (dpy: Display; visual: ADDRESS; colormap: LONGCARD;
+                        VAR color: XftColor) ;
+PROCEDURE XftDrawStringUtf8 (draw: ADDRESS; VAR color: XftColor;
+                             font: XftFontPtr; x, y: INTEGER;
+                             text: ADDRESS; len: INTEGER) ;
+PROCEDURE XftTextExtentsUtf8 (dpy: Display; font: XftFontPtr;
+                              text: ADDRESS; len: INTEGER;
+                              VAR extents: XGlyphInfo) ;
+
+END Xft.

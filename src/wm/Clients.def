@@ -4,6 +4,7 @@ DEFINITION MODULE Clients ;
    order, stacking order (top first) and focus history (recent first) *)
 
 FROM Xlib IMPORT Window ;
+FROM Gfx IMPORT Surface ;
 
 CONST
   AllDesktops = -1 ;
@@ -15,6 +16,7 @@ TYPE
   Client = POINTER TO ClientRec ;
   ClientRec = RECORD
     window, frame: Window ;
+    surface: Surface ;
     kind: Kind ;
     (* frame position and client size *)
     x, y, width, height: INTEGER ;

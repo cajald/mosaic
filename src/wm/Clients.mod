@@ -10,6 +10,7 @@ BEGIN
   NEW (c) ;
   c^.window := w ;
   c^.frame := None ;
+  c^.surface := NIL ;
   c^.kind := Normal ;
   c^.x := 0 ; c^.y := 0 ; c^.width := 1 ; c^.height := 1 ;
   c^.savedX := 0 ; c^.savedY := 0 ; c^.savedWidth := 0 ; c^.savedHeight := 0 ;
