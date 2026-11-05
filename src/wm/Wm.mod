@@ -30,7 +30,7 @@ FROM Clients IMPORT Client, Kind, AllDesktops ;
 FROM Storage IMPORT ALLOCATE, DEALLOCATE ;
 FROM Frames IMPORT Part ;
 FROM Keys IMPORT Action ;
-IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Log ;
+IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Config, Str, Log ;
 
 CONST
   RootMask = SubstructureRedirectMask + SubstructureNotifyMask +
@@ -630,8 +630,84 @@ BEGIN
   END
 END SetMinimized ;
 
+PROCEDURE SwitchDesktop (n: INTEGER) ;
+VAR
+  c: Client ;
+BEGIN
+  IF (n < 0) OR (n >= desktopCount) OR (n = currentDesktop)
+  THEN
+    RETURN
+  END ;
+  currentDesktop := n ;
+  (* map the new desktop before unmapping the old one *)
+  c := Clients.stackTop ;
+  WHILE c # NIL DO
+    IF Visible (c) THEN Show (c) END ;
+    c := c^.stackNext
+  END ;
+  c := Clients.stackTop ;
+  WHILE c # NIL DO
+    IF NOT Visible (c) THEN Show (c) END ;
+    c := c^.stackNext
+  END ;
+  Ewmh.SetDesktops (desktopCount, currentDesktop) ;
+  FocusFallback
+END SwitchDesktop ;
+
+PROCEDURE SendToDesktop (c: Client; n: INTEGER) ;
+VAR
+  t: Client ;
+BEGIN
+  IF (NOT Reparented (c)) OR (n = c^.desktop) OR
+     ((n # AllDesktops) AND ((n < 0) OR (n >= desktopCount)))
+  THEN
+    RETURN
+  END ;
+  c^.desktop := n ;
+  Ewmh.SetClientDesktop (c) ;
+  Show (c) ;
+  t := Clients.first ;
+  WHILE t # NIL DO
+    IF (t^.transientFor = c^.window) AND (t # c)
+    THEN
+      SendToDesktop (t, n)
+    END ;
+    t := t^.next
+  END ;
+  IF (c = focused) AND NOT Visible (c)
+  THEN
+    FocusFallback
+  END
+END SendToDesktop ;
+
+(* step through desktops, wrapping at either end *)
+PROCEDURE Neighbour (step: INTEGER) : INTEGER ;
+BEGIN
+  RETURN (currentDesktop + step + desktopCount) MOD desktopCount
+END Neighbour ;
+
+PROCEDURE SendAndFollow (step: INTEGER) ;
+VAR
+  c: Client ;
+  n: INTEGER ;
+BEGIN
+  c := focused ;
+  IF (c = NIL) OR (c^.desktop = AllDesktops)
+  THEN
+    RETURN
+  END ;
+  n := Neighbour (step) ;
+  SendToDesktop (c, n) ;
+  SwitchDesktop (n) ;
+  Activate (c)
+END SendAndFollow ;
+
 PROCEDURE Activate (c: Client) ;
 BEGIN
+  IF (c^.desktop # AllDesktops) AND (c^.desktop # currentDesktop)
+  THEN
+    SwitchDesktop (c^.desktop)
+  END ;
   SetMinimized (c, FALSE) ;
   RaiseClient (c) ;
   Focus (c)
@@ -1135,7 +1211,12 @@ BEGIN
     Keys.MaximizeWindow:
       IF focused # NIL THEN SetMaximized (focused, NOT focused^.maximized) END |
     Keys.FullscreenWindow:
-      IF focused # NIL THEN SetFullscreen (focused, NOT focused^.fullscreen) END
+      IF focused # NIL THEN SetFullscreen (focused, NOT focused^.fullscreen) END |
+    Keys.DesktopNext: SwitchDesktop (Neighbour (1)) |
+    Keys.DesktopPrev: SwitchDesktop (Neighbour (-1)) |
+    Keys.GotoDesktop: SwitchDesktop (arg) |
+    Keys.SendNext: SendAndFollow (1) |
+    Keys.SendPrev: SendAndFollow (-1)
   ELSE
   END
 END RunAction ;
@@ -1294,6 +1375,10 @@ BEGIN
       quit := TRUE
     END ;
     RETURN
+  ELSIF e.atom = Atoms.NetCurrentDesktop
+  THEN
+    SwitchDesktop (VAL (INTEGER, e.data[0])) ;
+    RETURN
   ELSIF e.atom = Atoms.NetRequestFrameExtents
   THEN
     ext[0] := Frames.Border ;
@@ -1314,6 +1399,14 @@ BEGIN
   ELSIF e.atom = Atoms.NetCloseWindow
   THEN
     Close (c)
+  ELSIF e.atom = Atoms.NetWmDesktop
+  THEN
+    IF (e.data[0] = 0FFFFFFFFH) OR (e.data[0] = -1)
+    THEN
+      SendToDesktop (c, AllDesktops)
+    ELSE
+      SendToDesktop (c, VAL (INTEGER, e.data[0]))
+    END
   ELSIF e.atom = Atoms.WmChangeState
   THEN
     IF e.data[0] = IconicState
@@ -1465,6 +1558,48 @@ BEGIN
   END
 END FreeCursors ;
 
+PROCEDURE SetupDesktops ;
+VAR
+  current: LONGCARD ;
+  names: ARRAY [0..255] OF CHAR ;
+  list: ARRAY [0..255] OF CHAR ;
+  i, n: CARDINAL ;
+  number: ARRAY [0..3] OF CHAR ;
+  ok: BOOLEAN ;
+BEGIN
+  desktopCount := Config.GetInt ("desktops", 4, 1, 9) ;
+  (* a restarted manager returns to the desktop it left *)
+  IF Props.GetCardinal (root, Atoms.NetCurrentDesktop, XA_CARDINAL, current) AND
+     (current < VAL (LONGCARD, desktopCount))
+  THEN
+    currentDesktop := VAL (INTEGER, current)
+  END ;
+  Config.Get ("desktop.names", "", names) ;
+  ok := TRUE ;
+  n := 0 ;
+  list[0] := 0C ;
+  IF names[0] = 0C
+  THEN
+    FOR i := 1 TO VAL (CARDINAL, desktopCount) DO
+      Str.IntToStr (i, number) ;
+      ok := ok AND Str.Append (number, list) AND Str.Append (",", list)
+    END ;
+    names := list
+  ELSE
+    ok := Str.Append (",", names)
+  END ;
+  (* commas become the nul separators the property wants *)
+  n := Str.Length (names) ;
+  FOR i := 1 TO n DO
+    IF names[i - 1] = ',' THEN names[i - 1] := 0C END
+  END ;
+  IF ok
+  THEN
+    Props.SetTextList (root, Atoms.NetDesktopNames, names, n)
+  END ;
+  Ewmh.SetDesktops (desktopCount, currentDesktop)
+END SetupDesktops ;
+
 PROCEDURE Start () : BOOLEAN ;
 BEGIN
   IF mx_become_wm (dpy, root, RootMask) = 0
@@ -1472,7 +1607,8 @@ BEGIN
     Log.Error ("another window manager is already running") ;
     RETURN FALSE
   END ;
-  Ewmh.Setup (desktopCount) ;
+  SetupDesktops ;
+  Ewmh.Setup ;
   UpdateWorkarea ;
   CreateCursors ;
   IF XDefineCursor (dpy, root, cursors[Frames.Nowhere]) = 0 THEN END ;

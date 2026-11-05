@@ -40,8 +40,9 @@ BEGIN
       nitems := VAL (LONGCARD, HIGH (values)) + 1
     END ;
     n := VAL (CARDINAL, nitems) ;
+    (* xlib widens 32-bit items to longs with sign extension *)
     FOR i := 1 TO n DO
-      values[i - 1] := longs^[i - 1]
+      values[i - 1] := longs^[i - 1] MOD 100000000H
     END
   END ;
   IF data # NIL

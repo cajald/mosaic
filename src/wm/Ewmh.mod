@@ -22,7 +22,7 @@ BEGIN
   INC (n)
 END Add ;
 
-PROCEDURE Setup (desktops: INTEGER) ;
+PROCEDURE Setup ;
 VAR
   s: ARRAY [0..47] OF LONGCARD ;
   n: CARDINAL ;
@@ -42,6 +42,21 @@ BEGIN
   Add (s, n, Atoms.NetClientListStacking) ;
   Add (s, n, Atoms.NetActiveWindow) ;
   Add (s, n, Atoms.NetCloseWindow) ;
+  Add (s, n, Atoms.NetNumberOfDesktops) ;
+  Add (s, n, Atoms.NetCurrentDesktop) ;
+  Add (s, n, Atoms.NetDesktopNames) ;
+  Add (s, n, Atoms.NetDesktopGeometry) ;
+  Add (s, n, Atoms.NetDesktopViewport) ;
+  Add (s, n, Atoms.NetWorkarea) ;
+  Add (s, n, Atoms.NetWmDesktop) ;
+  Add (s, n, Atoms.NetWmState) ;
+  Add (s, n, Atoms.NetWmStateFullscreen) ;
+  Add (s, n, Atoms.NetWmStateHidden) ;
+  Add (s, n, Atoms.NetWmStateMaximizedVert) ;
+  Add (s, n, Atoms.NetWmStateMaximizedHorz) ;
+  Add (s, n, Atoms.NetWmStateDemandsAttention) ;
+  Add (s, n, Atoms.NetWmStateSkipTaskbar) ;
+  Add (s, n, Atoms.NetWmStateSkipPager) ;
   Add (s, n, Atoms.NetWmName) ;
   Add (s, n, Atoms.NetWmWindowType) ;
   Add (s, n, Atoms.NetWmWindowTypeDock) ;

@@ -8,7 +8,7 @@ FROM Clients IMPORT Client ;
 VAR
   checkWindow: Window ;
 
-PROCEDURE Setup (desktops: INTEGER) ;
+PROCEDURE Setup ;
 PROCEDURE Teardown ;
 PROCEDURE UpdateClientList ;
 PROCEDURE SetActive (w: Window) ;
