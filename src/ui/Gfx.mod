@@ -263,6 +263,25 @@ BEGIN
   RETURN BytesWidth (ADR (text), Str.Length (text), strong)
 END TextWidth ;
 
+PROCEDURE SpanWidth (VAR text: ARRAY OF CHAR; from, to: CARDINAL;
+                     strong: BOOLEAN) : INTEGER ;
+BEGIN
+  IF to <= from
+  THEN
+    RETURN 0
+  END ;
+  RETURN BytesWidth (ADR (text[from]), to - from, strong)
+END SpanWidth ;
+
+PROCEDURE TextSpan (s: Surface; x, y: INTEGER; VAR text: ARRAY OF CHAR;
+                    from, to: CARDINAL; c: Color; strong: BOOLEAN) ;
+BEGIN
+  IF to > from
+  THEN
+    DrawBytes (s, x, y, ADR (text[from]), to - from, c, strong)
+  END
+END TextSpan ;
+
 PROCEDURE TextClip (s: Surface; x, y, maxWidth: INTEGER;
                     text: ARRAY OF CHAR; c: Color; strong: BOOLEAN) ;
 VAR

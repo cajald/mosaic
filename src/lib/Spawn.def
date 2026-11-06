@@ -1,0 +1,39 @@
+DEFINITION MODULE Spawn ;
+
+(* start programs directly with execvp, never through a shell *)
+
+CONST
+  MaxArgs = 64 ;
+
+TYPE
+  Args = RECORD
+    count: CARDINAL ;
+    used: CARDINAL ;
+    overflow: BOOLEAN ;
+    offsets: ARRAY [0..MaxArgs - 1] OF CARDINAL ;
+    data: ARRAY [0..16383] OF CHAR ;
+  END ;
+
+PROCEDURE Clear (VAR a: Args) ;
+
+(* FALSE once the argument list is full *)
+PROCEDURE Add (VAR a: Args; arg: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Get (VAR a: Args; i: CARDINAL; VAR arg: ARRAY OF CHAR) : BOOLEAN ;
+
+(* run in the background in dir (or the current one when empty);
+   returns the pid, or -1 with the reason already logged *)
+PROCEDURE Run (VAR a: Args; dir: ARRAY OF CHAR) : INTEGER ;
+
+(* is name an executable in PATH, or an executable path itself *)
+PROCEDURE Executable (name: ARRAY OF CHAR) : BOOLEAN ;
+
+(* path of a mosaic program installed beside this one, else its name *)
+PROCEDURE Sibling (name: ARRAY OF CHAR; VAR path: ARRAY OF CHAR) ;
+
+(* the configured terminal or the first one installed *)
+PROCEDURE Terminal (VAR name: ARRAY OF CHAR) : BOOLEAN ;
+
+(* collect exited children; returns a pid or 0 when none remain *)
+PROCEDURE Reap () : INTEGER ;
+
+END Spawn.

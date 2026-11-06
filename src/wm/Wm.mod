@@ -30,7 +30,8 @@ FROM Clients IMPORT Client, Kind, AllDesktops ;
 FROM Storage IMPORT ALLOCATE, DEALLOCATE ;
 FROM Frames IMPORT Part ;
 FROM Keys IMPORT Action ;
-IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Config, Str, Log ;
+FROM Desktop IMPORT Choice ;
+IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Config, Str, Desktop, Log ;
 
 CONST
   RootMask = SubstructureRedirectMask + SubstructureNotifyMask +
@@ -1216,7 +1217,10 @@ BEGIN
     Keys.DesktopPrev: SwitchDesktop (Neighbour (-1)) |
     Keys.GotoDesktop: SwitchDesktop (arg) |
     Keys.SendNext: SendAndFollow (1) |
-    Keys.SendPrev: SendAndFollow (-1)
+    Keys.SendPrev: SendAndFollow (-1) |
+    Keys.OpenLauncher: Desktop.Launch (Desktop.Launcher) |
+    Keys.OpenTerminal: Desktop.Launch (Desktop.Terminal) |
+    Keys.OpenFiles: Desktop.Launch (Desktop.Files)
   ELSE
   END
 END RunAction ;
@@ -1423,10 +1427,32 @@ BEGIN
   END
 END OnClientMessage ;
 
+PROCEDURE RootPress (VAR e: Event) ;
+VAR
+  desk: INTEGER ;
+BEGIN
+  IF e.detail # 3
+  THEN
+    RETURN
+  END ;
+  desk := 0 ;
+  CASE Desktop.RootMenu (e.xRoot, e.yRoot, e.time, currentDesktop,
+                         desktopCount, Handle, desk) OF
+    Desktop.Logout: quit := TRUE |
+    Desktop.SwitchTo: SwitchDesktop (desk)
+  ELSE
+  END
+END RootPress ;
+
 PROCEDURE OnButtonPress (VAR e: Event) ;
 VAR
   c: Client ;
 BEGIN
+  IF (e.window = root) AND (drag = DragNone) AND NOT cycling
+  THEN
+    RootPress (e) ;
+    RETURN
+  END ;
   c := Clients.Find (e.window) ;
   IF c # NIL
   THEN
@@ -1612,6 +1638,7 @@ BEGIN
   UpdateWorkarea ;
   CreateCursors ;
   IF XDefineCursor (dpy, root, cursors[Frames.Nowhere]) = 0 THEN END ;
+  Desktop.Paint ;
   Keys.Grab ;
   IF XGrabServer (dpy) = 0 THEN END ;
   ScanExisting ;
@@ -1632,6 +1659,7 @@ BEGIN
                      CurrentTime) = 0 THEN END ;
   Ewmh.Teardown ;
   FreeCursors ;
+  Desktop.Release ;
   IF XSelectInput (dpy, root, 0) = 0 THEN END ;
   IF XSync (dpy, False) = 0 THEN END
 END Stop ;

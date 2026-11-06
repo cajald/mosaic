@@ -5,7 +5,7 @@ FROM Args IMPORT GetArg, Narg ;
 FROM libc IMPORT exit ;
 FROM Posix IMPORT mx_watch_signals, mx_take_signal, mx_init_locale ;
 FROM XGlue IMPORT Event ;
-IMPORT Log, XServer, Atoms, Config, Gfx, Wm ;
+IMPORT Log, XServer, Atoms, Config, Gfx, Spawn, Wm ;
 
 CONST
   Version = "0.1" ;
@@ -45,6 +45,7 @@ BEGIN
     THEN
       Wm.Handle (event)
     END ;
+    WHILE Spawn.Reap () > 0 DO END ;
     IF mx_take_signal () # 0
     THEN
       Wm.quit := TRUE

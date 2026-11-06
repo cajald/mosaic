@@ -1,0 +1,88 @@
+DEFINITION MODULE Widgets ;
+
+(* buttons, text fields and list views drawn in the mosaic style *)
+
+FROM Xlib IMPORT KeySym ;
+FROM Gfx IMPORT Surface ;
+
+CONST
+  XKBackSpace = 0FF08H ;
+  XKTab = 0FF09H ;
+  XKReturn = 0FF0DH ;
+  XKEscape = 0FF1BH ;
+  XKHome = 0FF50H ;
+  XKLeft = 0FF51H ;
+  XKUp = 0FF52H ;
+  XKRight = 0FF53H ;
+  XKDown = 0FF54H ;
+  XKPageUp = 0FF55H ;
+  XKPageDown = 0FF56H ;
+  XKEnd = 0FF57H ;
+  XKKPEnter = 0FF8DH ;
+  XKDelete = 0FFFFH ;
+  XKF2 = 0FFBFH ;
+  XKF5 = 0FFC2H ;
+  ButtonHeight = 22 ;
+  FieldHeight = 22 ;
+  ScrollbarWidth = 14 ;
+
+TYPE
+  Button = RECORD
+    x, y, w, h: INTEGER ;
+    label: ARRAY [0..63] OF CHAR ;
+    down, isDefault: BOOLEAN ;
+  END ;
+
+  TextField = RECORD
+    x, y, w: INTEGER ;
+    text: ARRAY [0..4095] OF CHAR ;
+    cursor: CARDINAL ;
+    focused: BOOLEAN ;
+  END ;
+
+  Edit = (EditNone, EditChanged, EditMoved, EditEnter, EditCancel) ;
+
+  ListView = RECORD
+    x, y, w, h: INTEGER ;
+    count, selected, top, rowHeight: INTEGER ;
+    focused: BOOLEAN ;
+  END ;
+
+  (* draw row index of a list inside x, y, w, h *)
+  DrawRow = PROCEDURE (Surface, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER,
+                       BOOLEAN) ;
+
+PROCEDURE Inside (px, py, x, y, w, h: INTEGER) : BOOLEAN ;
+PROCEDURE IsEnter (sym: KeySym) : BOOLEAN ;
+
+PROCEDURE SetButton (VAR b: Button; label: ARRAY OF CHAR; x, y, w: INTEGER) ;
+PROCEDURE DrawButton (s: Surface; VAR b: Button) ;
+PROCEDURE OnButton (VAR b: Button; px, py: INTEGER) : BOOLEAN ;
+
+PROCEDURE SetField (VAR f: TextField; text: ARRAY OF CHAR) ;
+PROCEDURE DrawField (s: Surface; VAR f: TextField) ;
+PROCEDURE FieldKey (VAR f: TextField; sym: KeySym;
+                    text: ARRAY OF CHAR) : Edit ;
+
+PROCEDURE DrawList (s: Surface; VAR l: ListView; row: DrawRow) ;
+PROCEDURE ListRowAt (VAR l: ListView; px, py: INTEGER) : INTEGER ;
+PROCEDURE ListOnScrollbar (VAR l: ListView; px, py: INTEGER) : BOOLEAN ;
+
+(* move the view so the thumb follows a pointer at py *)
+PROCEDURE ListDragThumb (VAR l: ListView; py: INTEGER) ;
+PROCEDURE ListSelect (VAR l: ListView; index: INTEGER) ;
+PROCEDURE ListScroll (VAR l: ListView; rows: INTEGER) ;
+
+(* arrow, page and home/end keys; TRUE if the selection moved *)
+PROCEDURE ListKey (VAR l: ListView; sym: KeySym) : BOOLEAN ;
+PROCEDURE ListVisibleRows (VAR l: ListView) : INTEGER ;
+
+(* word-wrapped text; returns the height used *)
+PROCEDURE DrawWrapped (s: Surface; x, y, w: INTEGER;
+                       text: ARRAY OF CHAR) : INTEGER ;
+PROCEDURE WrappedHeight (w: INTEGER; text: ARRAY OF CHAR) : INTEGER ;
+
+(* the raised panel look used by dialog and toolbar areas *)
+PROCEDURE DrawPanel (s: Surface; x, y, w, h: INTEGER) ;
+
+END Widgets.

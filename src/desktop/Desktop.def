@@ -1,0 +1,21 @@
+DEFINITION MODULE Desktop ;
+
+(* the root window: tiled background and the desktop menu *)
+
+FROM Xlib IMPORT Time ;
+FROM Menu IMPORT Dispatch ;
+
+TYPE
+  Choice = (Nothing, Logout, SwitchTo) ;
+  Program = (Launcher, Terminal, Files) ;
+
+PROCEDURE Paint ;
+PROCEDURE Release ;
+
+PROCEDURE Launch (p: Program) ;
+
+(* show the menu at x, y; desktop is set for SwitchTo *)
+PROCEDURE RootMenu (x, y: INTEGER; t: Time; current, count: INTEGER;
+                    other: Dispatch; VAR desktop: INTEGER) : Choice ;
+
+END Desktop.

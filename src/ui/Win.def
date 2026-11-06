@@ -1,0 +1,39 @@
+DEFINITION MODULE Win ;
+
+(* top-level and popup windows owned by mosaic programs *)
+
+FROM SYSTEM IMPORT ADDRESS ;
+FROM Xlib IMPORT Window, Atom, KeySym ;
+FROM XGlue IMPORT Event ;
+FROM Gfx IMPORT Surface ;
+
+TYPE
+  Handle = POINTER TO WinRec ;
+  WinRec = RECORD
+    window: Window ;
+    surface: Surface ;
+    ic: ADDRESS ;
+    width, height: INTEGER ;
+  END ;
+
+PROCEDURE Create (title, class: ARRAY OF CHAR; width, height,
+                  minWidth, minHeight: INTEGER) : Handle ;
+
+(* an unmanaged window for menus *)
+PROCEDURE CreatePopup (x, y, width, height: INTEGER) : Handle ;
+
+PROCEDURE SetType (h: Handle; type: Atom) ;
+PROCEDURE SetTitle (h: Handle; title: ARRAY OF CHAR) ;
+PROCEDURE Destroy (VAR h: Handle) ;
+
+(* track a ConfigureNotify; TRUE when the size changed *)
+PROCEDURE Configured (h: Handle; VAR e: Event) : BOOLEAN ;
+
+(* the window manager asks the window to close *)
+PROCEDURE IsClose (h: Handle; VAR e: Event) : BOOLEAN ;
+
+(* keysym and utf-8 text of a key press *)
+PROCEDURE Key (h: Handle; VAR e: Event; VAR sym: KeySym;
+               VAR text: ARRAY OF CHAR) ;
+
+END Win.

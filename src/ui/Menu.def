@@ -1,0 +1,33 @@
+DEFINITION MODULE Menu ;
+
+(* popup menus; Popup runs until a choice is made or the menu is
+   dismissed, handing events for other windows to the caller *)
+
+FROM Xlib IMPORT Time ;
+FROM XGlue IMPORT Event ;
+
+CONST
+  MaxItems = 40 ;
+  Separator = "-" ;
+
+TYPE
+  Dispatch = PROCEDURE (VAR Event) ;
+  Item = RECORD
+    label: ARRAY [0..95] OF CHAR ;
+    enabled, checked: BOOLEAN ;
+  END ;
+  Menu = RECORD
+    count: CARDINAL ;
+    items: ARRAY [0..MaxItems - 1] OF Item ;
+  END ;
+
+PROCEDURE Clear (VAR m: Menu) ;
+PROCEDURE Add (VAR m: Menu; label: ARRAY OF CHAR; enabled: BOOLEAN) ;
+PROCEDURE AddChecked (VAR m: Menu; label: ARRAY OF CHAR; checked: BOOLEAN) ;
+PROCEDURE AddSeparator (VAR m: Menu) ;
+
+(* index of the chosen item or -1; x, y in root coordinates *)
+PROCEDURE Popup (VAR m: Menu; x, y: INTEGER; t: Time;
+                 other: Dispatch) : INTEGER ;
+
+END Menu.
