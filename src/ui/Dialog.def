@@ -1,0 +1,18 @@
+DEFINITION MODULE Dialog ;
+
+(* modal dialogs; events for other windows go to other while open *)
+
+FROM Xlib IMPORT Window ;
+FROM Menu IMPORT Dispatch ;
+
+PROCEDURE Message (owner: Window; title, text: ARRAY OF CHAR;
+                   other: Dispatch) ;
+
+PROCEDURE Confirm (owner: Window; title, text, action: ARRAY OF CHAR;
+                   other: Dispatch) : BOOLEAN ;
+
+(* edit value in place; FALSE when cancelled *)
+PROCEDURE Prompt (owner: Window; title, text: ARRAY OF CHAR;
+                  VAR value: ARRAY OF CHAR; other: Dispatch) : BOOLEAN ;
+
+END Dialog.

@@ -1,0 +1,46 @@
+DEFINITION MODULE Tasks ;
+
+(* what the panel knows about the session, read from ewmh properties
+   and kept current through PropertyNotify *)
+
+FROM Xlib IMPORT Window ;
+FROM XGlue IMPORT Event ;
+
+CONST
+  MaxTasks = 512 ;
+  MaxDesktops = 16 ;
+  AllDesktops = -1 ;
+
+TYPE
+  Task = RECORD
+    window: Window ;
+    title: ARRAY [0..255] OF CHAR ;
+    desktop: INTEGER ;
+    minimized, skip, urgent: BOOLEAN ;
+  END ;
+
+VAR
+  tasks: ARRAY [0..MaxTasks - 1] OF Task ;
+  count: INTEGER ;
+  active: Window ;
+  current, desktops: INTEGER ;
+  names: ARRAY [0..MaxDesktops - 1] OF ARRAY [0..31] OF CHAR ;
+
+(* panel is our own window, which is never tracked *)
+PROCEDURE Init (panel: Window) ;
+
+(* TRUE when e changed anything the panel shows *)
+PROCEDURE Changed (VAR e: Event) : BOOLEAN ;
+
+PROCEDURE OnDesktop (VAR t: Task; desk: INTEGER) : BOOLEAN ;
+PROCEDURE Occupied (desk: INTEGER) : BOOLEAN ;
+
+PROCEDURE Activate (w: Window) ;
+PROCEDURE Minimize (w: Window) ;
+PROCEDURE ToggleMaximize (w: Window) ;
+PROCEDURE Close (w: Window) ;
+PROCEDURE SendTo (w: Window; desk: INTEGER) ;
+PROCEDURE SwitchTo (desk: INTEGER) ;
+PROCEDURE Logout ;
+
+END Tasks.

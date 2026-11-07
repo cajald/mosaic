@@ -402,11 +402,32 @@ BEGIN
     END ;
     c := c^.next
   END ;
+  IF (left = workX) AND (top = workY) AND
+     (width - left - right = workWidth) AND (height - top - bottom = workHeight)
+  THEN
+    RETURN
+  END ;
   workX := left ;
   workY := top ;
   workWidth := width - left - right ;
   workHeight := height - top - bottom ;
-  Ewmh.SetWorkarea (desktopCount, workX, workY, workWidth, workHeight)
+  Ewmh.SetWorkarea (desktopCount, workX, workY, workWidth, workHeight) ;
+  (* keep windows clear of a panel that appeared or changed size *)
+  c := Clients.first ;
+  WHILE c # NIL DO
+    IF Reparented (c) AND NOT c^.fullscreen
+    THEN
+      IF c^.maximized
+      THEN
+        MaximizedGeometry (c)
+      ELSE
+        Fit (c)
+      END ;
+      Frames.Apply (c) ;
+      Frames.Draw (c, c = focused)
+    END ;
+    c := c^.next
+  END
 END UpdateWorkarea ;
 
 (* keep the frame inside the work area, shrinking it if needed *)
@@ -1667,6 +1688,10 @@ END Stop ;
 BEGIN
   quit := FALSE ;
   focused := NIL ;
+  workX := 0 ;
+  workY := 0 ;
+  workWidth := -1 ;
+  workHeight := -1 ;
   currentDesktop := 0 ;
   desktopCount := 1 ;
   cascade := 0 ;

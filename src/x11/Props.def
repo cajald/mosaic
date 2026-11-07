@@ -20,6 +20,10 @@ PROCEDURE GetText (w: Window; property: Atom;
                    VAR text: ARRAY OF CHAR) : BOOLEAN ;
 PROCEDURE SetText (w: Window; property: Atom; text: ARRAY OF CHAR) ;
 
+(* raw bytes of a nul-separated list; returns the byte count *)
+PROCEDURE GetTextList (w: Window; property: Atom;
+                       VAR data: ARRAY OF CHAR) : CARDINAL ;
+
 (* nul-separated utf-8 list such as _NET_DESKTOP_NAMES *)
 PROCEDURE SetTextList (w: Window; property: Atom; VAR data: ARRAY OF CHAR;
                        len: CARDINAL) ;

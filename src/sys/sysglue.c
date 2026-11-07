@@ -30,6 +30,11 @@ void mx_watch_signals(void)
 	signal(SIGPIPE, SIG_IGN);
 }
 
+int mx_signal_pending(void)
+{
+	return pending_signal;
+}
+
 int mx_take_signal(void)
 {
 	int sig = pending_signal;

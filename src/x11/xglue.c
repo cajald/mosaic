@@ -281,6 +281,26 @@ int mx_wm_hints(Display *dpy, Window w, int *input, int *urgent, int *state)
 	return 1;
 }
 
+void mx_set_input_hint(Display *dpy, Window w, int input)
+{
+	XWMHints h;
+
+	memset(&h, 0, sizeof h);
+	h.flags = InputHint | StateHint;
+	h.input = input;
+	h.initial_state = NormalState;
+	XSetWMHints(dpy, w, &h);
+}
+
+/* add to the events this connection selects on w, keeping the rest */
+void mx_add_input(Display *dpy, Window w, long mask)
+{
+	XWindowAttributes a;
+
+	if (XGetWindowAttributes(dpy, w, &a))
+		XSelectInput(dpy, w, a.your_event_mask | mask);
+}
+
 void mx_set_override_redirect(Display *dpy, Window w, int on)
 {
 	XSetWindowAttributes a;

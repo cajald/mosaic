@@ -155,6 +155,41 @@ BEGIN
                       ADR (text), Str.Length (text)) = 0 THEN END
 END SetText ;
 
+PROCEDURE GetTextList (w: Window; property: Atom;
+                       VAR data: ARRAY OF CHAR) : CARDINAL ;
+VAR
+  actualType: Atom ;
+  format: INTEGER ;
+  nitems, after: LONGCARD ;
+  raw: ADDRESS ;
+  bytes: Bytes ;
+  i, n: CARDINAL ;
+BEGIN
+  raw := NIL ;
+  IF XGetWindowProperty (dpy, w, property, 0, VAL (LONGINT, HIGH (data)) DIV 4,
+                         False, Atoms.Utf8String, actualType, format, nitems,
+                         after, raw) # 0
+  THEN
+    RETURN 0
+  END ;
+  n := 0 ;
+  IF (raw # NIL) AND (format = 8)
+  THEN
+    bytes := raw ;
+    n := VAL (CARDINAL, nitems) ;
+    IF n > HIGH (data) THEN n := HIGH (data) END ;
+    FOR i := 1 TO n DO
+      data[i - 1] := bytes^[i - 1]
+    END ;
+    data[n] := 0C
+  END ;
+  IF raw # NIL
+  THEN
+    IF XFree (raw) = 0 THEN END
+  END ;
+  RETURN n
+END GetTextList ;
+
 PROCEDURE SetTextList (w: Window; property: Atom; VAR data: ARRAY OF CHAR;
                        len: CARDINAL) ;
 BEGIN

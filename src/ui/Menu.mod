@@ -7,6 +7,7 @@ FROM Xlib IMPORT Time, KeySym, None, CurrentTime, False, True, XMapRaised,
                  ButtonPressMask, ButtonReleaseMask, PointerMotionMask,
                  Expose, MotionNotify, ButtonPress, ButtonRelease, KeyPress ;
 FROM XGlue IMPORT Event ;
+FROM Posix IMPORT mx_signal_pending ;
 FROM XServer IMPORT dpy, root, width, height ;
 FROM Win IMPORT Handle ;
 FROM Gfx IMPORT Surface ;
@@ -196,7 +197,10 @@ BEGIN
   done := FALSE ;
   Draw (m, h, hot) ;
   WHILE NOT done DO
-    IF NOT (XServer.WaitEvent (1000) AND XServer.NextEvent (e))
+    IF mx_signal_pending () # 0
+    THEN
+      done := TRUE
+    ELSIF NOT (XServer.WaitEvent (1000) AND XServer.NextEvent (e))
     THEN
       e.window := None
     ELSIF e.window # h^.window
