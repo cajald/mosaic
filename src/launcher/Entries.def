@@ -1,0 +1,41 @@
+DEFINITION MODULE Entries ;
+
+(* freedesktop desktop entries: discovery, parsing and exec lines *)
+
+FROM Spawn IMPORT Args ;
+
+CONST
+  MaxEntries = 4096 ;
+  Categories = 13 ;
+  AllCategory = 0 ;
+
+TYPE
+  Entry = POINTER TO EntryRec ;
+  EntryRec = RECORD
+    id: ARRAY [0..255] OF CHAR ;
+    file: ARRAY [0..4095] OF CHAR ;
+    name: ARRAY [0..127] OF CHAR ;
+    comment: ARRAY [0..255] OF CHAR ;
+    exec: ARRAY [0..2047] OF CHAR ;
+    dir: ARRAY [0..1023] OF CHAR ;
+    terminal: BOOLEAN ;
+    category: CARDINAL ;
+  END ;
+
+VAR
+  entries: ARRAY [0..MaxEntries - 1] OF Entry ;
+  count: CARDINAL ;
+  categoryNames: ARRAY [0..Categories - 1] OF ARRAY [0..15] OF CHAR ;
+
+(* read every application directory, sorted by name *)
+PROCEDURE Load ;
+
+(* parse one file; FALSE if it is not a launchable application *)
+PROCEDURE Parse (path, id: ARRAY OF CHAR; VAR e: EntryRec) : BOOLEAN ;
+
+(* split the Exec line into arguments, expanding field codes;
+   FALSE with a reason when the line is malformed *)
+PROCEDURE Command (VAR e: EntryRec; VAR a: Args;
+                   VAR reason: ARRAY OF CHAR) : BOOLEAN ;
+
+END Entries.

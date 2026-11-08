@@ -1,9 +1,9 @@
 IMPLEMENTATION MODULE Config ;
 
 FROM SYSTEM IMPORT ADR, ADDRESS ;
-FROM libc IMPORT open, read, close, getenv ;
-FROM Posix IMPORT OREADONLY, OCLOEXEC, ENOENT, mx_errno ;
-IMPORT Str, Log ;
+FROM libc IMPORT getenv ;
+FROM Posix IMPORT ENOENT ;
+IMPORT Str, Log, TextFile ;
 
 CONST
   MaxEntries = 64 ;
@@ -97,8 +97,8 @@ PROCEDURE Load ;
 VAR
   path: ARRAY [0..4095] OF CHAR ;
   line: ARRAY [0..511] OF CHAR ;
-  fd, n, total: INTEGER ;
-  i, j, number: CARDINAL ;
+  i, j, number, total: CARDINAL ;
+  err: INTEGER ;
   overlong: BOOLEAN ;
 BEGIN
   count := 0 ;
@@ -106,36 +106,24 @@ BEGIN
   THEN
     RETURN
   END ;
-  fd := open (ADR (path), OREADONLY + OCLOEXEC, 0) ;
-  IF fd < 0
-  THEN
-    IF mx_errno () # ENOENT
-    THEN
-      Log.ErrorErrno ("cannot read", path)
-    END ;
-    RETURN
-  END ;
-  total := 0 ;
-  REPEAT
-    n := read (fd, ADR (buffer[total]), MaxFile - total) ;
-    IF n > 0 THEN INC (total, n) END
-  UNTIL (n <= 0) OR (total >= MaxFile) ;
-  IF close (fd) # 0 THEN END ;
-  IF n < 0
-  THEN
-    Log.ErrorErrno ("cannot read", path) ;
-    RETURN
-  END ;
-  IF total >= MaxFile
+  err := TextFile.Read (path, buffer, total) ;
+  IF err = TextFile.EFBIG
   THEN
     Log.Error2 (path, "file too large, ignored") ;
+    RETURN
+  ELSIF err = ENOENT
+  THEN
+    RETURN
+  ELSIF err # 0
+  THEN
+    Log.Error2 ("cannot read", path) ;
     RETURN
   END ;
   buffer[total] := 12C ;
   j := 0 ;
   number := 1 ;
   overlong := FALSE ;
-  FOR i := 0 TO VAL (CARDINAL, total) DO
+  FOR i := 0 TO total DO
     IF buffer[i] = 12C
     THEN
       line[j] := 0C ;

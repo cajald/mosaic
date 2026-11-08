@@ -1,0 +1,13 @@
+DEFINITION MODULE TextFile ;
+
+(* whole small files read into a caller buffer *)
+
+(* 0 on success, else an errno value; EFBIG when the file does not
+   fit, leaving room for a terminating nul *)
+PROCEDURE Read (path: ARRAY OF CHAR; VAR buf: ARRAY OF CHAR;
+                VAR len: CARDINAL) : INTEGER ;
+
+CONST
+  EFBIG = 27 ;
+
+END TextFile.
