@@ -26,6 +26,9 @@ PROCEDURE Lower (c: CHAR) : CHAR ;
 PROCEDURE Compare (a, b: ARRAY OF CHAR) : INTEGER ;
 PROCEDURE ContainsNoCase (s, part: ARRAY OF CHAR) : BOOLEAN ;
 
+(* copy for display: control bytes and broken utf-8 become '?' *)
+PROCEDURE Printable (VAR src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) ;
+
 PROCEDURE IntToStr (n: LONGINT; VAR s: ARRAY OF CHAR) ;
 PROCEDURE StrToInt (s: ARRAY OF CHAR; VAR n: INTEGER) : BOOLEAN ;
 PROCEDURE Trim (VAR s: ARRAY OF CHAR) ;

@@ -423,8 +423,11 @@ int mx_lookup_key(XIC ic, XEvent *raw, char *buf, int len, KeySym *sym)
 		n = Xutf8LookupString(ic, &raw->xkey, buf, len - 1, sym, &status);
 		if (status == XBufferOverflow || status == XLookupNone)
 			n = 0;
-		if (status == XLookupChars)
-			*sym = NoSymbol;
+		/* editing keys may come back as bare control characters */
+		if (status == XLookupChars || status == XLookupNone) {
+			char ignored[8];
+			XLookupString(&raw->xkey, ignored, sizeof ignored, sym, NULL);
+		}
 	} else {
 		n = XLookupString(&raw->xkey, buf, len - 1, sym, NULL);
 		/* latin-1 bytes above ascii are not valid utf-8 */

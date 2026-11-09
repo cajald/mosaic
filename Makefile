@@ -15,13 +15,13 @@ X11_CFLAGS := $(shell $(PKG_CONFIG) --cflags x11 xft)
 X11_LIBS := $(shell $(PKG_CONFIG) --libs x11 xft)
 
 BUILD := build
-SRCDIRS := src src/x11 src/sys src/lib src/ui src/wm src/desktop src/panel src/launcher
+SRCDIRS := src src/x11 src/sys src/lib src/ui src/wm src/desktop src/panel src/launcher src/files
 INCLUDES := $(foreach d,$(SRCDIRS),-I$(d))
 
 vpath %.mod $(SRCDIRS)
 vpath %.c $(SRCDIRS)
 
-PROGRAMS := mosaic mosaic-panel mosaic-launcher
+PROGRAMS := mosaic mosaic-panel mosaic-launcher mosaic-files
 
 # modules shared by every program
 COMMON_OBJS := Log.o Str.o TextFile.o Config.o Spawn.o XServer.o Atoms.o Props.o \
@@ -31,6 +31,7 @@ MOSAIC_OBJS := mosaic.o Desktop.o Clients.o Frames.o Keys.o Ewmh.o Wm.o \
 	$(COMMON_OBJS)
 PANEL_OBJS := panel.o Tasks.o Dialog.o $(COMMON_OBJS)
 LAUNCHER_OBJS := launcher.o Entries.o Dialog.o $(COMMON_OBJS)
+FILES_OBJS := files.o Fs.o Dialog.o $(COMMON_OBJS)
 
 all: $(PROGRAMS)
 
@@ -43,8 +44,12 @@ mosaic-panel: $(addprefix $(BUILD)/,$(PANEL_OBJS))
 mosaic-launcher: $(addprefix $(BUILD)/,$(LAUNCHER_OBJS))
 	$(GM2) $(LDFLAGS) $^ -o $@ $(X11_LIBS)
 
+mosaic-files: $(addprefix $(BUILD)/,$(FILES_OBJS))
+	$(GM2) $(LDFLAGS) $^ -o $@ $(X11_LIBS)
+
 # program modules carry the generated main and module initialisation
-$(BUILD)/mosaic.o $(BUILD)/panel.o $(BUILD)/launcher.o: M2MAIN := -fscaffold-main -fscaffold-dynamic
+$(BUILD)/mosaic.o $(BUILD)/panel.o $(BUILD)/launcher.o \
+	$(BUILD)/files.o: M2MAIN := -fscaffold-main -fscaffold-dynamic
 
 $(BUILD)/%.o: %.mod | $(BUILD)
 	$(GM2) $(M2FLAGS) $(M2MAIN) $(INCLUDES) -MMD -MP -c $< -o $@

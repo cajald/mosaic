@@ -222,6 +222,54 @@ BEGIN
   RETURN FALSE
 END ContainsNoCase ;
 
+(* length of the valid utf-8 sequence at s[i], or 0 *)
+PROCEDURE SequenceLength (VAR s: ARRAY OF CHAR; i: CARDINAL) : CARDINAL ;
+VAR
+  c, n, k: CARDINAL ;
+BEGIN
+  c := ORD (s[i]) ;
+  IF c < 128 THEN RETURN 1
+  ELSIF (c >= 0C2H) AND (c <= 0DFH) THEN n := 2
+  ELSIF (c >= 0E0H) AND (c <= 0EFH) THEN n := 3
+  ELSIF (c >= 0F0H) AND (c <= 0F4H) THEN n := 4
+  ELSE RETURN 0
+  END ;
+  FOR k := 1 TO n - 1 DO
+    IF (i + k > HIGH (s)) OR (ORD (s[i + k]) DIV 64 # 2)
+    THEN
+      RETURN 0
+    END
+  END ;
+  RETURN n
+END SequenceLength ;
+
+PROCEDURE Printable (VAR src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) ;
+VAR
+  i, j, k, n: CARDINAL ;
+BEGIN
+  i := 0 ;
+  j := 0 ;
+  WHILE (i <= HIGH (src)) AND (src[i] # 0C) AND (j < HIGH (dst)) DO
+    n := SequenceLength (src, i) ;
+    IF (n = 0) OR (src[i] < ' ') OR (src[i] = 177C)
+    THEN
+      dst[j] := '?' ;
+      INC (j) ;
+      INC (i)
+    ELSIF j + n > HIGH (dst)
+    THEN
+      i := HIGH (src) + 1
+    ELSE
+      FOR k := 0 TO n - 1 DO
+        dst[j + k] := src[i + k]
+      END ;
+      INC (i, n) ;
+      INC (j, n)
+    END
+  END ;
+  dst[j] := 0C
+END Printable ;
+
 PROCEDURE IntToStr (n: LONGINT; VAR s: ARRAY OF CHAR) ;
 VAR
   digits: ARRAY [0..23] OF CHAR ;

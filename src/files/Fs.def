@@ -1,0 +1,62 @@
+DEFINITION MODULE Fs ;
+
+(* directory listings and file operations; every operation returns 0
+   or an errno value and leaves the offending path in failedPath *)
+
+CONST
+  PathMax = 4096 ;
+  NameMax = 256 ;
+  ETooDeep = 40 ;
+  (* not an errno: a folder copied or moved into itself *)
+  EIntoItself = 1000 ;
+
+TYPE
+  Path = ARRAY [0..PathMax - 1] OF CHAR ;
+  Item = POINTER TO ItemRec ;
+  ItemRec = RECORD
+    name: ARRAY [0..NameMax - 1] OF CHAR ;
+    size, mtime: LONGINT ;
+    mode: CARDINAL ;
+    isDir, isLink, broken: BOOLEAN ;
+  END ;
+  ItemArray = POINTER TO ARRAY [0..16777215] OF Item ;
+  Listing = RECORD
+    items: ItemArray ;
+    count, capacity: CARDINAL ;
+    (* entries that could not be read or named *)
+    skipped: CARDINAL ;
+  END ;
+
+VAR
+  failedPath: Path ;
+
+PROCEDURE Init (VAR l: Listing) ;
+PROCEDURE Free (VAR l: Listing) ;
+
+(* folders first, then by name *)
+PROCEDURE Read (dir: ARRAY OF CHAR; showHidden: BOOLEAN;
+                VAR l: Listing) : INTEGER ;
+
+PROCEDURE Join (dir, name: ARRAY OF CHAR; VAR out: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Parent (VAR path: ARRAY OF CHAR) ;
+PROCEDURE BaseName (path: ARRAY OF CHAR; VAR name: ARRAY OF CHAR) ;
+PROCEDURE ValidName (name: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Exists (path: ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE IsDirectory (path: ARRAY OF CHAR) : BOOLEAN ;
+
+PROCEDURE MakeDir (path: ARRAY OF CHAR) : INTEGER ;
+
+(* never replaces an existing target *)
+PROCEDURE Rename (oldPath, newPath: ARRAY OF CHAR) : INTEGER ;
+
+(* into destDir under the same name, or "name (2)" when taken;
+   created receives the new path *)
+PROCEDURE Copy (src, destDir: ARRAY OF CHAR;
+                VAR created: ARRAY OF CHAR) : INTEGER ;
+PROCEDURE Move (src, destDir: ARRAY OF CHAR;
+                VAR created: ARRAY OF CHAR) : INTEGER ;
+
+(* folders are removed with their contents; links are not followed *)
+PROCEDURE Delete (path: ARRAY OF CHAR) : INTEGER ;
+
+END Fs.
