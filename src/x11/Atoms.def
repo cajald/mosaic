@@ -17,7 +17,7 @@ VAR
   NetWmWindowType, NetWmWindowTypeDock, NetWmWindowTypeDesktop,
   NetWmWindowTypeDialog, NetWmWindowTypeSplash, NetWmWindowTypeUtility,
   NetWmWindowTypeNormal, NetWmStrut, NetWmStrutPartial, NetFrameExtents,
-  NetRequestFrameExtents, NetWmPid,
+  NetRequestFrameExtents, NetWmPid, NetWmMoveresize,
   MosaicCommand: Atom ;
 
 CONST

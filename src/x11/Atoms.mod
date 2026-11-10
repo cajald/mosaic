@@ -54,6 +54,7 @@ BEGIN
   NetFrameExtents := Get ("_NET_FRAME_EXTENTS") ;
   NetRequestFrameExtents := Get ("_NET_REQUEST_FRAME_EXTENTS") ;
   NetWmPid := Get ("_NET_WM_PID") ;
+  NetWmMoveresize := Get ("_NET_WM_MOVERESIZE") ;
   MosaicCommand := Get ("_MOSAIC_COMMAND")
 END Init ;
 

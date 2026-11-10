@@ -13,6 +13,7 @@ FROM Xlib IMPORT Window, Atom, Time, None, CurrentTime, False,
                  MapRequest, UnmapNotify, DestroyNotify, ConfigureRequest,
                  PropertyNotify, ClientMessage, ButtonPress, Expose,
                  KeyPress, KeyRelease, ButtonRelease, MotionNotify,
+                 ConfigureNotify, XQueryPointer, Button1Mask,
                  SubstructureRedirectMask, SubstructureNotifyMask,
                  PropertyChangeMask, StructureNotifyMask, ButtonPressMask,
                  FocusChangeMask,
@@ -582,7 +583,10 @@ END Manage ;
 PROCEDURE Unmanage (c: Client; alive, withdraw: BOOLEAN) ;
 VAR
   wasFocused, wasDock: BOOLEAN ;
+  owner: Window ;
+  parent: Client ;
 BEGIN
+  owner := c^.transientFor ;
   wasFocused := c = focused ;
   wasDock := c^.kind = Dock ;
   IF dragClient = c
@@ -616,7 +620,18 @@ BEGIN
   Ewmh.UpdateClientList ;
   IF wasFocused
   THEN
-    FocusFallback
+    (* a closed dialog hands focus back to its owner *)
+    parent := NIL ;
+    IF owner # None
+    THEN
+      parent := Clients.Find (owner)
+    END ;
+    IF (parent # NIL) AND Eligible (parent)
+    THEN
+      Focus (parent)
+    ELSE
+      FocusFallback
+    END
   END
 END Unmanage ;
 
@@ -1048,6 +1063,52 @@ BEGIN
   RETURN Frames.EdgeSE
 END NearestCorner ;
 
+(* _NET_WM_MOVERESIZE: a client asks us to run a move or resize drag,
+   typically from its own title bar or size grip *)
+PROCEDURE ClientDrag (c: Client; VAR e: Event) ;
+CONST
+  Move = 8 ;
+  Cancel = 11 ;
+VAR
+  parts: ARRAY [0..7] OF Part ;
+  start: Event ;
+  rootRet, child: Window ;
+  rx, ry, wx, wy: INTEGER ;
+  buttons: CARDINAL ;
+BEGIN
+  IF e.data[2] = Cancel
+  THEN
+    IF dragClient = c THEN EndDrag END ;
+    RETURN
+  END ;
+  IF (drag # DragNone) OR (NOT Reparented (c)) OR (e.data[2] < 0) OR
+     (e.data[2] > Move)
+  THEN
+    RETURN
+  END ;
+  parts[0] := Frames.EdgeNW ; parts[1] := Frames.EdgeN ;
+  parts[2] := Frames.EdgeNE ; parts[3] := Frames.EdgeE ;
+  parts[4] := Frames.EdgeSE ; parts[5] := Frames.EdgeS ;
+  parts[6] := Frames.EdgeSW ; parts[7] := Frames.EdgeW ;
+  start := e ;
+  start.xRoot := VAL (INTEGER, e.data[0]) ;
+  start.yRoot := VAL (INTEGER, e.data[1]) ;
+  start.time := CurrentTime ;
+  IF e.data[2] = Move
+  THEN
+    StartDrag (c, DragMove, Frames.TitleBar, start)
+  ELSE
+    StartDrag (c, DragResize, parts[e.data[2]], start)
+  END ;
+  (* the button may already be up, and then no release would end it *)
+  IF (drag # DragNone) AND
+     (XQueryPointer (dpy, root, rootRet, child, rx, ry, wx, wy, buttons) # 0) AND
+     (buttons DIV Button1Mask MOD 32 = 0)
+  THEN
+    EndDrag
+  END
+END ClientDrag ;
+
 PROCEDURE FramePress (c: Client; VAR e: Event) ;
 VAR
   part: Part ;
@@ -1424,6 +1485,9 @@ BEGIN
   ELSIF e.atom = Atoms.NetCloseWindow
   THEN
     Close (c)
+  ELSIF e.atom = Atoms.NetWmMoveresize
+  THEN
+    ClientDrag (c, e)
   ELSIF e.atom = Atoms.NetWmDesktop
   THEN
     IF (e.data[0] = 0FFFFFFFFH) OR (e.data[0] = -1)
@@ -1516,6 +1580,20 @@ BEGIN
   END
 END OnExpose ;
 
+(* the root changed size, for example through xrandr *)
+PROCEDURE OnRootConfigure (VAR e: Event) ;
+BEGIN
+  IF (e.window # root) OR ((e.width = width) AND (e.height = height))
+  THEN
+    RETURN
+  END ;
+  width := e.width ;
+  height := e.height ;
+  Ewmh.SetDesktops (desktopCount, currentDesktop) ;
+  workWidth := -1 ;
+  UpdateWorkarea
+END OnRootConfigure ;
+
 PROCEDURE Handle (VAR e: Event) ;
 BEGIN
   CASE e.type OF
@@ -1530,6 +1608,7 @@ BEGIN
     DestroyNotify: OnDestroyNotify (e) |
     ConfigureRequest: OnConfigureRequest (e) |
     PropertyNotify: OnPropertyNotify (e) |
+    ConfigureNotify: OnRootConfigure (e) |
     ClientMessage: OnClientMessage (e) |
     ButtonPress: OnButtonPress (e) |
     ButtonRelease: OnButtonRelease (e) |

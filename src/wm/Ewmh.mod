@@ -42,6 +42,7 @@ BEGIN
   Add (s, n, Atoms.NetClientListStacking) ;
   Add (s, n, Atoms.NetActiveWindow) ;
   Add (s, n, Atoms.NetCloseWindow) ;
+  Add (s, n, Atoms.NetWmMoveresize) ;
   Add (s, n, Atoms.NetNumberOfDesktops) ;
   Add (s, n, Atoms.NetCurrentDesktop) ;
   Add (s, n, Atoms.NetDesktopNames) ;

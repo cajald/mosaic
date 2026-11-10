@@ -126,6 +126,13 @@ BEGIN
   RETURN c^.height + ExtraHeight (c)
 END FrameHeight ;
 
+(* a window whose size hints pin it has nothing to maximize *)
+PROCEDURE Resizable (c: Client) : BOOLEAN ;
+BEGIN
+  RETURN NOT ((c^.maxWidth > 0) AND (c^.maxWidth = c^.minWidth) AND
+              (c^.maxHeight > 0) AND (c^.maxHeight = c^.minHeight))
+END Resizable ;
+
 PROCEDURE BoxX (c: Client; part: Part) : INTEGER ;
 VAR
   right: INTEGER ;
@@ -134,7 +141,9 @@ BEGIN
   CASE part OF
     CloseBox: RETURN Border + BoxGap |
     MaximizeBox: RETURN right |
-    MinimizeBox: RETURN right - BoxGap - BoxSize
+    MinimizeBox:
+      IF Resizable (c) THEN RETURN right - BoxGap - BoxSize END ;
+      RETURN right
   ELSE
     RETURN 0
   END
@@ -208,7 +217,10 @@ BEGIN
             Border + TitleHeight - 1, Gfx.Dark) ;
   DrawBox (c, CloseBox) ;
   DrawBox (c, MinimizeBox) ;
-  DrawBox (c, MaximizeBox) ;
+  IF Resizable (c)
+  THEN
+    DrawBox (c, MaximizeBox)
+  END ;
   left := BoxX (c, CloseBox) + BoxSize + 8 ;
   right := BoxX (c, MinimizeBox) - 8 ;
   IF right > left
@@ -289,7 +301,10 @@ BEGIN
   boxY := Border + (TitleHeight - BoxSize) DIV 2 ;
   IF Within (x, y, BoxX (c, CloseBox), boxY, BoxSize) THEN RETURN CloseBox END ;
   IF Within (x, y, BoxX (c, MinimizeBox), boxY, BoxSize) THEN RETURN MinimizeBox END ;
-  IF Within (x, y, BoxX (c, MaximizeBox), boxY, BoxSize) THEN RETURN MaximizeBox END ;
+  IF Resizable (c) AND Within (x, y, BoxX (c, MaximizeBox), boxY, BoxSize)
+  THEN
+    RETURN MaximizeBox
+  END ;
   RETURN TitleBar
 END HitTest ;
 
