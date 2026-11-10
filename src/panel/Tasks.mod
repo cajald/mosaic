@@ -1,6 +1,6 @@
 IMPLEMENTATION MODULE Tasks ;
 
-FROM Xlib IMPORT Window, Atom, None, PropertyChangeMask,
+FROM Xlib IMPORT Window, Atom, None, PropertyChangeMask, XGetTransientForHint,
                  SubstructureNotifyMask, SubstructureRedirectMask,
                  PropertyNotify, IconicState, XA_WINDOW, XA_ATOM,
                  XA_CARDINAL, XA_WM_NAME ;
@@ -58,13 +58,14 @@ BEGIN
   END
 END ReadTitle ;
 
-(* docks and desktop windows never get a task button *)
+(* docks, desktop windows and dialogs never get a task button *)
 PROCEDURE Ignored (w: Window) : BOOLEAN ;
 VAR
   types: ARRAY [0..7] OF LONGCARD ;
   n, i: CARDINAL ;
+  parent: Window ;
 BEGIN
-  IF w = owner
+  IF (w = owner) OR (XGetTransientForHint (dpy, w, parent) # 0)
   THEN
     RETURN TRUE
   END ;
