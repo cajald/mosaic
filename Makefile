@@ -61,11 +61,13 @@ $(BUILD):
 	mkdir -p $@
 
 install: all
-	install -d $(DESTDIR)$(BINDIR)
+	install -d $(DESTDIR)$(BINDIR) $(DESTDIR)$(DATADIR)/xsessions
 	install -m 755 $(PROGRAMS) $(DESTDIR)$(BINDIR)
+	install -m 644 assets/mosaic.desktop $(DESTDIR)$(DATADIR)/xsessions/mosaic.desktop
 
 uninstall:
 	rm -f $(addprefix $(DESTDIR)$(BINDIR)/,$(PROGRAMS))
+	rm -f $(DESTDIR)$(DATADIR)/xsessions/mosaic.desktop
 
 clean:
 	rm -rf $(BUILD) $(PROGRAMS)

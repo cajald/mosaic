@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Mosaic
+Comment=A lightweight desktop environment written in Modula-2
+Exec=mosaic
+TryExec=mosaic
+DesktopNames=Mosaic
