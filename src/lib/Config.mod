@@ -89,6 +89,11 @@ BEGIN
   e.value[i] := 0C ;
   Str.Trim (e.key) ;
   Str.Trim (e.value) ;
+  IF e.key[0] = 0C
+  THEN
+    LineError (file, number, "missing key, line ignored") ;
+    RETURN
+  END ;
   entries[count] := e ;
   INC (count)
 END ParseLine ;
