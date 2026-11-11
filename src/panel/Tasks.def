@@ -29,7 +29,7 @@ VAR
 (* panel is our own window, which is never tracked *)
 PROCEDURE Init (panel: Window) ;
 
-(* TRUE when e changed anything the panel shows *)
+(* true when e changed anything the panel shows *)
 PROCEDURE Changed (VAR e: Event) : BOOLEAN ;
 
 PROCEDURE OnDesktop (VAR t: Task; desk: INTEGER) : BOOLEAN ;

@@ -11,7 +11,7 @@ PROCEDURE Assign (src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
 PROCEDURE Append (src: ARRAY OF CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
 PROCEDURE AppendChar (c: CHAR; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
 
-(* copy a c string; FALSE when it does not fit *)
+(* copy a c string; false when it does not fit *)
 PROCEDURE FromC (p: ADDRESS; VAR dst: ARRAY OF CHAR) : BOOLEAN ;
 
 (* copy n bytes for display, cutting at a utf-8 boundary if needed *)

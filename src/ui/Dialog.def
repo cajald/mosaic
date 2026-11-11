@@ -11,7 +11,7 @@ PROCEDURE Message (owner: Window; title, text: ARRAY OF CHAR;
 PROCEDURE Confirm (owner: Window; title, text, action: ARRAY OF CHAR;
                    other: Dispatch) : BOOLEAN ;
 
-(* edit value in place; FALSE when cancelled *)
+(* edit value in place; false when cancelled *)
 PROCEDURE Prompt (owner: Window; title, text: ARRAY OF CHAR;
                   VAR value: ARRAY OF CHAR; other: Dispatch) : BOOLEAN ;
 

@@ -162,7 +162,7 @@ BEGIN
   RETURN 0
 END LocaleRank ;
 
-(* FALSE if the file is not a launchable application *)
+(* false if the file is not a launchable application *)
 PROCEDURE Parse (path, id: ARRAY OF CHAR; VAR e: EntryRec) : BOOLEAN ;
 VAR
   len, i, j, eq, nameRank, commentRank, rank: CARDINAL ;

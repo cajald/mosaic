@@ -18,7 +18,8 @@ FROM Xlib IMPORT Window, Atom, Time, None, CurrentTime, False,
                  PropertyChangeMask, StructureNotifyMask, ButtonPressMask,
                  FocusChangeMask,
                  AnyButton, AnyModifier, GrabModeSync, GrabModeAsync,
-                 ReplayPointer, RevertToPointerRoot, CWX, CWY, CWWidth,
+                 ReplayPointer, PointerRoot, RevertToPointerRoot, CWX, CWY,
+                 CWWidth,
                  CWHeight, CWStackMode, Above, IsViewable, NormalState,
                  IconicState, WithdrawnState, XA_ATOM, XA_CARDINAL,
                  XA_WM_NAME, XA_WM_HINTS, XA_WM_NORMAL_HINTS,
@@ -1754,7 +1755,7 @@ BEGIN
     c := Clients.first ;
     Unmanage (c, TRUE, FALSE)
   END ;
-  IF XSetInputFocus (dpy, 1 (* PointerRoot *), RevertToPointerRoot,
+  IF XSetInputFocus (dpy, PointerRoot, RevertToPointerRoot,
                      CurrentTime) = 0 THEN END ;
   Ewmh.Teardown ;
   FreeCursors ;

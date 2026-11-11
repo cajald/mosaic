@@ -73,7 +73,7 @@ PROCEDURE ListDragThumb (VAR l: ListView; py: INTEGER) ;
 PROCEDURE ListSelect (VAR l: ListView; index: INTEGER) ;
 PROCEDURE ListScroll (VAR l: ListView; rows: INTEGER) ;
 
-(* arrow, page and home/end keys; TRUE if the selection moved *)
+(* arrow, page and home/end keys; true if the selection moved *)
 PROCEDURE ListKey (VAR l: ListView; sym: KeySym) : BOOLEAN ;
 
 (* word-wrapped text; returns the height used *)

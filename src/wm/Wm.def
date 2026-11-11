@@ -5,7 +5,7 @@ FROM XGlue IMPORT Event ;
 VAR
   quit: BOOLEAN ;
 
-(* take over the screen; FALSE if another window manager runs *)
+(* take over the screen; false if another window manager runs *)
 PROCEDURE Start () : BOOLEAN ;
 PROCEDURE Handle (VAR e: Event) ;
 

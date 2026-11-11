@@ -16,7 +16,7 @@ TYPE
 
 PROCEDURE Clear (VAR a: Args) ;
 
-(* FALSE once the argument list is full *)
+(* false once the argument list is full *)
 PROCEDURE Add (VAR a: Args; arg: ARRAY OF CHAR) : BOOLEAN ;
 PROCEDURE Get (VAR a: Args; i: CARDINAL; VAR arg: ARRAY OF CHAR) : BOOLEAN ;
 

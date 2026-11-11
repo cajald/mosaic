@@ -21,7 +21,7 @@ EXPORT UNQUALIFIED
   ShiftMask, LockMask, ControlMask, Mod1Mask, Mod4Mask, AnyModifier,
   Button1Mask, Button2Mask, Button3Mask,
   AnyButton, AnyKey, GrabModeSync, GrabModeAsync, ReplayPointer,
-  RevertToPointerRoot, RevertToParent, GrabSuccess,
+  PointerRoot, RevertToPointerRoot, RevertToParent, GrabSuccess,
   PropModeReplace, PropModeAppend, PropertyNewValue, PropertyDelete,
   CWX, CWY, CWWidth, CWHeight, CWBorderWidth, CWSibling, CWStackMode,
   Above, Below,
@@ -120,6 +120,7 @@ CONST
   GrabModeAsync = 1 ;
   ReplayPointer = 2 ;
   GrabSuccess = 0 ;
+  PointerRoot = 1 ;
   RevertToPointerRoot = 1 ;
   RevertToParent = 2 ;
 

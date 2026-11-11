@@ -26,7 +26,7 @@ PROCEDURE SetType (h: Handle; type: Atom) ;
 PROCEDURE SetTitle (h: Handle; title: ARRAY OF CHAR) ;
 PROCEDURE Destroy (VAR h: Handle) ;
 
-(* track a ConfigureNotify; TRUE when the size changed *)
+(* track a ConfigureNotify; true when the size changed *)
 PROCEDURE Configured (h: Handle; VAR e: Event) : BOOLEAN ;
 
 (* the window manager asks the window to close *)

@@ -18,7 +18,7 @@ VAR
 PROCEDURE Open () : BOOLEAN ;
 PROCEDURE Close ;
 
-(* wait until an x event is queued; FALSE on timeout or signal *)
+(* wait until an x event is queued; false on timeout or signal *)
 PROCEDURE WaitEvent (timeoutMs: INTEGER) : BOOLEAN ;
 
 PROCEDURE NextEvent (VAR e: Event) : BOOLEAN ;

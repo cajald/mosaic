@@ -31,7 +31,7 @@ VAR
 PROCEDURE Load ;
 
 (* split the Exec line into arguments, expanding field codes;
-   FALSE with a reason when the line is malformed *)
+   false with a reason when the line is malformed *)
 PROCEDURE Command (VAR e: EntryRec; VAR a: Args;
                    VAR reason: ARRAY OF CHAR) : BOOLEAN ;
 
