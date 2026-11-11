@@ -21,10 +21,12 @@ CONST
   Gap = 4 ;
   MaxTaskWidth = 200 ;
   MinTaskWidth = 40 ;
+  MoreWidth = 44 ;
   ZoneLimit = Tasks.MaxTasks + Tasks.MaxDesktops + 4 ;
 
 TYPE
-  ZoneKind = (LauncherZone, DesktopZone, TaskZone, ClockZone, SessionZone) ;
+  ZoneKind = (LauncherZone, DesktopZone, TaskZone, MoreZone, ClockZone,
+              SessionZone) ;
   Zone = RECORD
     kind: ZoneKind ;
     x, w, index: INTEGER ;
@@ -76,7 +78,7 @@ END Visible ;
 
 PROCEDURE Layout ;
 VAR
-  x, right, w, i, n, taskWidth: INTEGER ;
+  x, right, w, i, n, taskWidth, hidden: INTEGER ;
 BEGIN
   zoneCount := 0 ;
   x := Gap ;
@@ -108,13 +110,28 @@ BEGIN
   END ;
   taskWidth := (right - x) DIV n ;
   IF taskWidth > MaxTaskWidth THEN taskWidth := MaxTaskWidth END ;
-  IF taskWidth < MinTaskWidth THEN taskWidth := MinTaskWidth END ;
+  IF taskWidth < MinTaskWidth
+  THEN
+    (* too many: the last slot opens a menu with the rest *)
+    taskWidth := MinTaskWidth ;
+    DEC (right, MoreWidth)
+  END ;
+  hidden := 0 ;
   FOR i := 0 TO Tasks.count - 1 DO
-    IF Visible (Tasks.tasks[i]) AND (x + taskWidth <= right)
+    IF Visible (Tasks.tasks[i])
     THEN
-      AddZone (TaskZone, x, taskWidth - 2, i) ;
-      INC (x, taskWidth)
+      IF x + taskWidth <= right
+      THEN
+        AddZone (TaskZone, x, taskWidth - 2, i) ;
+        INC (x, taskWidth)
+      ELSE
+        INC (hidden)
+      END
     END
+  END ;
+  IF hidden > 0
+  THEN
+    AddZone (MoreZone, right, MoreWidth - 2, hidden)
   END
 END Layout ;
 
@@ -132,6 +149,7 @@ VAR
   y, h, ty, tw: INTEGER ;
   t: Tasks.Task ;
   label: ARRAY [0..259] OF CHAR ;
+  text: ARRAY [0..15] OF CHAR ;
   ink: Gfx.Color ;
 BEGIN
   y := 3 ;
@@ -183,6 +201,12 @@ BEGIN
         IF t.minimized THEN ink := Gfx.InkDim END ;
         Gfx.TextClip (s, z.x + 8, ty, z.w - 14, label, ink, FALSE)
       END |
+    MoreZone:
+      Gfx.Button (s, z.x, y, z.w, h, down) ;
+      Str.IntToStr (z.index, label) ;
+      IF Str.Assign ("+", text) AND Str.Append (label, text) THEN END ;
+      tw := Gfx.TextWidth (text, FALSE) ;
+      Gfx.Text (s, z.x + (z.w - tw) DIV 2, ty, text, Gfx.Ink, FALSE) |
     ClockZone:
       Gfx.Bevel (s, z.x, y, z.w, h, FALSE) ;
       Gfx.Text (s, z.x + 10, ty, clockText, Gfx.Ink, FALSE) |
@@ -308,6 +332,45 @@ BEGIN
   END
 END TaskMenu ;
 
+(* tasks that did not fit on the panel, as a menu *)
+PROCEDURE MoreMenu (VAR z: Zone; VAR e: Event) ;
+VAR
+  m: Menu.Menu ;
+  index: ARRAY [0..Menu.MaxItems - 1] OF INTEGER ;
+  i, shown, choice: INTEGER ;
+BEGIN
+  Menu.Clear (m) ;
+  shown := 0 ;
+  FOR i := 0 TO Tasks.count - 1 DO
+    IF Visible (Tasks.tasks[i]) AND NOT OnPanel (i) AND
+       (shown < Menu.MaxItems)
+    THEN
+      Menu.AddChecked (m, Tasks.tasks[i].title,
+                       Tasks.tasks[i].window = Tasks.active) ;
+      index[shown] := i ;
+      INC (shown)
+    END
+  END ;
+  choice := Menu.Popup (m, z.x, height, e.time, Dispatch) ;
+  IF choice >= 0
+  THEN
+    Tasks.Activate (Tasks.tasks[index[choice]].window)
+  END
+END MoreMenu ;
+
+PROCEDURE OnPanel (task: INTEGER) : BOOLEAN ;
+VAR
+  i: INTEGER ;
+BEGIN
+  FOR i := 0 TO zoneCount - 1 DO
+    IF (zones[i].kind = TaskZone) AND (zones[i].index = task)
+    THEN
+      RETURN TRUE
+    END
+  END ;
+  RETURN FALSE
+END OnPanel ;
+
 PROCEDURE Press (VAR e: Event) ;
 VAR
   i: INTEGER ;
@@ -340,6 +403,8 @@ BEGIN
           Tasks.Activate (t.window)
         END
       END |
+    MoreZone:
+      MoreMenu (zones[i], e) |
     SessionZone:
       SessionMenu (zones[i].x, e)
   ELSE
