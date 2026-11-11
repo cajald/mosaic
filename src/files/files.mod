@@ -13,7 +13,7 @@ FROM Posix IMPORT ENOENT, EEXIST, ENAMETOOLONG, strerror, mx_watch_signals, mx_t
 FROM libc IMPORT exit, getenv, getcwd ;
 FROM Args IMPORT GetArg, Narg ;
 FROM Gfx IMPORT Surface ;
-FROM Widgets IMPORT ListView, TextField, Button, Edit ;
+FROM Widgets IMPORT ListView, TextField, Button ;
 FROM Spawn IMPORT Args ;
 FROM Fs IMPORT Path, Item, Listing ;
 IMPORT XServer, Atoms, Config, Gfx, Win, Widgets, Menu, Dialog, Spawn, Str,

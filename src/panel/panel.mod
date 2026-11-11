@@ -3,10 +3,9 @@ MODULE panel ;
 (* mosaic-panel: launcher button, desktops, task list, clock and the
    session menu along the top edge of the screen *)
 
-FROM SYSTEM IMPORT ADR ;
-FROM Xlib IMPORT Window, None, XMapWindow, XMoveResizeWindow, XSelectInput,
-                 Expose, ButtonPress, ConfigureNotify, PropertyNotify,
-                 PropertyChangeMask, StructureNotifyMask, XA_CARDINAL ;
+FROM Xlib IMPORT XMapWindow, XMoveResizeWindow, XSelectInput, Expose,
+                 ButtonPress, ConfigureNotify, PropertyChangeMask,
+                 StructureNotifyMask, XA_CARDINAL ;
 FROM XGlue IMPORT Event, mx_set_input_hint ;
 FROM XServer IMPORT dpy, root, width ;
 FROM Posix IMPORT mx_watch_signals, mx_take_signal, mx_init_locale,

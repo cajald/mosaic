@@ -11,8 +11,7 @@ EXPORT UNQUALIFIED
   OREADONLY, OWRITEONLY, OCREAT, OEXCL, OCLOEXEC, ODIRECTORY, ONOFOLLOW,
   XOK, SIFMT, SIFDIR, SIFREG, SIFLNK,
   strerror, poll, waitpid, kill, access, mkdir, rmdir, unlink, renameat2,
-  opendir, closedir, symlink, readlink, chmod, fsync,
-  mx_watch_signals, mx_take_signal, mx_signal_pending, mx_reset_signals, mx_init_locale,
+  opendir, closedir, symlink, readlink, chmod, mx_watch_signals, mx_take_signal, mx_signal_pending, mx_init_locale,
   mx_spawn, mx_file_info, mx_read_dir, mx_errno, mx_format_time ;
 
 TYPE
@@ -69,12 +68,10 @@ PROCEDURE closedir (dir: ADDRESS) : INTEGER ;
 PROCEDURE symlink (target, path: ADDRESS) : INTEGER ;
 PROCEDURE readlink (path, buf: ADDRESS; size: LONGCARD) : LONGINT ;
 PROCEDURE chmod (path: ADDRESS; mode: CARDINAL) : INTEGER ;
-PROCEDURE fsync (fd: INTEGER) : INTEGER ;
 
 PROCEDURE mx_watch_signals ;
 PROCEDURE mx_take_signal () : INTEGER ;
 PROCEDURE mx_signal_pending () : INTEGER ;
-PROCEDURE mx_reset_signals ;
 PROCEDURE mx_init_locale ;
 PROCEDURE mx_spawn (argv: ADDRESS; dir: ADDRESS) : INTEGER ;
 PROCEDURE mx_file_info (path: ADDRESS; follow: INTEGER; VAR mode: CARDINAL;

@@ -157,18 +157,12 @@ void mx_compress_motion(Display *dpy, mx_event *m)
 		decode(&e, m);
 }
 
-static int error_count;
-static int last_error;
-static int verbose_errors = 1;
-
 static int log_error(Display *dpy, XErrorEvent *e)
 {
 	char text[128];
 
-	error_count++;
-	last_error = e->error_code;
 	/* windows vanish between our requests; that race is routine */
-	if (verbose_errors && e->error_code != BadWindow) {
+	if (e->error_code != BadWindow) {
 		XGetErrorText(dpy, e->error_code, text, sizeof text);
 		fprintf(stderr, "mosaic: x error: %s (request %d.%d, resource 0x%lx)\n",
 			text, e->request_code, e->minor_code, e->resourceid);
@@ -179,17 +173,6 @@ static int log_error(Display *dpy, XErrorEvent *e)
 void mx_install_error_handler(void)
 {
 	XSetErrorHandler(log_error);
-}
-
-/* errors on vanished client windows are routine and need no log line */
-void mx_quiet_errors(int quiet)
-{
-	verbose_errors = !quiet;
-}
-
-int mx_error_count(void)
-{
-	return error_count;
 }
 
 static int redirect_refused;
@@ -307,14 +290,6 @@ void mx_set_override_redirect(Display *dpy, Window w, int on)
 
 	a.override_redirect = on;
 	XChangeWindowAttributes(dpy, w, CWOverrideRedirect, &a);
-}
-
-void mx_set_bit_gravity(Display *dpy, Window w, int gravity)
-{
-	XSetWindowAttributes a;
-
-	a.bit_gravity = gravity;
-	XChangeWindowAttributes(dpy, w, CWBitGravity, &a);
 }
 
 void mx_configure_window(Display *dpy, Window w, unsigned int mask, int x,

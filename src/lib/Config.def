@@ -6,7 +6,4 @@ PROCEDURE Load ;
 PROCEDURE Get (key, default: ARRAY OF CHAR; VAR value: ARRAY OF CHAR) ;
 PROCEDURE GetInt (key: ARRAY OF CHAR; default, min, max: INTEGER) : INTEGER ;
 
-(* $XDG_CONFIG_HOME or ~/.config joined with name *)
-PROCEDURE ConfigPath (name: ARRAY OF CHAR; VAR path: ARRAY OF CHAR) : BOOLEAN ;
-
 END Config.

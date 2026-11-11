@@ -1,6 +1,6 @@
 IMPLEMENTATION MODULE XServer ;
 
-FROM SYSTEM IMPORT ADDRESS, ADR ;
+FROM SYSTEM IMPORT ADR ;
 FROM Xlib IMPORT XOpenDisplay, XCloseDisplay, XDefaultScreen, XRootWindow,
                  XDisplayWidth, XDisplayHeight, XDefaultVisual,
                  XDefaultColormap, XDefaultDepth, XPending, XFlush,

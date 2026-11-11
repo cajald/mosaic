@@ -2,9 +2,8 @@ MODULE launcher ;
 
 (* mosaic-launcher: browse, search and start installed applications *)
 
-FROM Xlib IMPORT Window, KeySym, XMapWindow, XA_WINDOW,
-                 Expose, ConfigureNotify, KeyPress, ButtonPress,
-                 ButtonRelease, MotionNotify, ClientMessage ;
+FROM Xlib IMPORT KeySym, XMapWindow, XA_WINDOW, Expose, ConfigureNotify,
+                 KeyPress, ButtonPress, ButtonRelease, MotionNotify ;
 FROM XGlue IMPORT Event, mx_send_client_message ;
 FROM XServer IMPORT dpy, root ;
 FROM Posix IMPORT mx_watch_signals, mx_take_signal, mx_init_locale ;

@@ -44,7 +44,7 @@ int mx_take_signal(void)
 }
 
 /* child side of fork: undo the signal setup before exec */
-void mx_reset_signals(void)
+static void mx_reset_signals(void)
 {
 	sigset_t none;
 

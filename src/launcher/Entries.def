@@ -30,9 +30,6 @@ VAR
 (* read every application directory, sorted by name *)
 PROCEDURE Load ;
 
-(* parse one file; FALSE if it is not a launchable application *)
-PROCEDURE Parse (path, id: ARRAY OF CHAR; VAR e: EntryRec) : BOOLEAN ;
-
 (* split the Exec line into arguments, expanding field codes;
    FALSE with a reason when the line is malformed *)
 PROCEDURE Command (VAR e: EntryRec; VAR a: Args;

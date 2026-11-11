@@ -75,7 +75,6 @@ PROCEDURE ListScroll (VAR l: ListView; rows: INTEGER) ;
 
 (* arrow, page and home/end keys; TRUE if the selection moved *)
 PROCEDURE ListKey (VAR l: ListView; sym: KeySym) : BOOLEAN ;
-PROCEDURE ListVisibleRows (VAR l: ListView) : INTEGER ;
 
 (* word-wrapped text; returns the height used *)
 PROCEDURE DrawWrapped (s: Surface; x, y, w: INTEGER;

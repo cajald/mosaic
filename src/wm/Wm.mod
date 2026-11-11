@@ -31,7 +31,6 @@ FROM Clients IMPORT Client, Kind, AllDesktops ;
 FROM Storage IMPORT ALLOCATE, DEALLOCATE ;
 FROM Frames IMPORT Part ;
 FROM Keys IMPORT Action ;
-FROM Desktop IMPORT Choice ;
 IMPORT Clients, Frames, Keys, Ewmh, Atoms, Props, Config, Str, Desktop, Log ;
 
 CONST

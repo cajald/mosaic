@@ -1,6 +1,6 @@
 IMPLEMENTATION MODULE Win ;
 
-FROM SYSTEM IMPORT ADR, ADDRESS ;
+FROM SYSTEM IMPORT ADR ;
 FROM Xlib IMPORT Window, Atom, KeySym, XCreateSimpleWindow, XDestroyWindow,
                  XSelectInput, XSetWMProtocols, XChangeProperty,
                  PropModeReplace, XA_STRING, XA_ATOM, XA_CARDINAL, XA_WM_NAME,

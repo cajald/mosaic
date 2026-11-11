@@ -3,7 +3,7 @@ IMPLEMENTATION MODULE Entries ;
 FROM SYSTEM IMPORT ADR, ADDRESS ;
 FROM Storage IMPORT ALLOCATE, DEALLOCATE ;
 FROM libc IMPORT getenv ;
-FROM Posix IMPORT ENOENT, ENOTDIR, SIFMT, SIFDIR, SIFREG, opendir, closedir,
+FROM Posix IMPORT ENOENT, ENOTDIR, SIFDIR, SIFREG, opendir, closedir,
                   mx_read_dir, mx_file_info, mx_errno ;
 FROM Spawn IMPORT Args ;
 IMPORT Str, Log, Spawn, TextFile ;
@@ -162,6 +162,7 @@ BEGIN
   RETURN 0
 END LocaleRank ;
 
+(* FALSE if the file is not a launchable application *)
 PROCEDURE Parse (path, id: ARRAY OF CHAR; VAR e: EntryRec) : BOOLEAN ;
 VAR
   len, i, j, eq, nameRank, commentRank, rank: CARDINAL ;

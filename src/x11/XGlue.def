@@ -7,11 +7,11 @@ FROM Xlib IMPORT Display, Window, Atom, KeySym ;
 
 EXPORT UNQUALIFIED
   Event, mx_next_event, mx_compress_motion, mx_install_error_handler,
-  mx_quiet_errors, mx_error_count, mx_become_wm, mx_window_attrs,
+  mx_become_wm, mx_window_attrs,
   mx_size_hints, mx_set_size_hints, mx_wm_hints, mx_set_input_hint,
   mx_add_input,
   mx_set_override_redirect,
-  mx_set_bit_gravity, mx_configure_window, mx_send_configure_notify,
+  mx_configure_window, mx_send_configure_notify,
   mx_send_client_message, mx_numlock_mask, mx_create_ic, mx_destroy_ic,
   mx_close_im, mx_lookup_key ;
 
@@ -30,8 +30,6 @@ TYPE
 PROCEDURE mx_next_event (dpy: Display; VAR e: Event) : INTEGER ;
 PROCEDURE mx_compress_motion (dpy: Display; VAR e: Event) ;
 PROCEDURE mx_install_error_handler ;
-PROCEDURE mx_quiet_errors (quiet: INTEGER) ;
-PROCEDURE mx_error_count () : INTEGER ;
 PROCEDURE mx_become_wm (dpy: Display; root: Window;
                         mask: LONGINT) : INTEGER ;
 PROCEDURE mx_window_attrs (dpy: Display; w: Window;
@@ -46,7 +44,6 @@ PROCEDURE mx_wm_hints (dpy: Display; w: Window;
 PROCEDURE mx_set_input_hint (dpy: Display; w: Window; input: INTEGER) ;
 PROCEDURE mx_add_input (dpy: Display; w: Window; mask: LONGINT) ;
 PROCEDURE mx_set_override_redirect (dpy: Display; w: Window; on: INTEGER) ;
-PROCEDURE mx_set_bit_gravity (dpy: Display; w: Window; gravity: INTEGER) ;
 PROCEDURE mx_configure_window (dpy: Display; w: Window; mask: CARDINAL;
                                x, y, width, height, border: INTEGER;
                                sibling: Window; stackMode: INTEGER) ;

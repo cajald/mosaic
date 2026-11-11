@@ -264,15 +264,6 @@ BEGIN
   RETURN mx_file_info (ADR (path), 0, mode, size, mtime) = 0
 END Exists ;
 
-PROCEDURE IsDirectory (path: ARRAY OF CHAR) : BOOLEAN ;
-VAR
-  mode: CARDINAL ;
-  size, mtime: LONGINT ;
-BEGIN
-  RETURN (mx_file_info (ADR (path), 1, mode, size, mtime) = 0) AND
-         (Kind (mode) = SIFDIR DIV 4096)
-END IsDirectory ;
-
 PROCEDURE MakeDir (path: ARRAY OF CHAR) : INTEGER ;
 BEGIN
   IF mkdir (ADR (path), 511) # 0

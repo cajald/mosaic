@@ -20,6 +20,7 @@ VAR
   count: CARDINAL ;
   buffer: ARRAY [0..MaxFile] OF CHAR ;
 
+(* $XDG_CONFIG_HOME or ~/.config joined with name *)
 PROCEDURE ConfigPath (name: ARRAY OF CHAR; VAR path: ARRAY OF CHAR) : BOOLEAN ;
 VAR
   p: ADDRESS ;

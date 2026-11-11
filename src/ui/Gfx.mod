@@ -1,9 +1,9 @@
 IMPLEMENTATION MODULE Gfx ;
 
 FROM SYSTEM IMPORT ADDRESS, ADR ;
-FROM Xlib IMPORT Window, Drawable, GC, None, XCreateGC, XFreeGC,
-                 XSetForeground, XFillRectangle, XDrawLine, XDrawRectangle,
-                 XCreatePixmap, XFreePixmap, XCopyArea ;
+FROM Xlib IMPORT Window, GC, XCreateGC, XFreeGC, XSetForeground,
+                 XFillRectangle, XDrawLine, XDrawRectangle, XCreatePixmap,
+                 XFreePixmap, XCopyArea ;
 FROM Xft IMPORT XftFontPtr, XftColor, XGlyphInfo, XftFontOpenName,
                 XftFontClose, XftDrawCreate, XftDrawChange, XftDrawDestroy,
                 XftColorAllocName, XftColorFree, XftDrawStringUtf8,

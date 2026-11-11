@@ -8,7 +8,7 @@ FROM Xlib IMPORT Time, KeySym, None, CurrentTime, False, True, XMapRaised,
                  Expose, MotionNotify, ButtonPress, ButtonRelease, KeyPress ;
 FROM XGlue IMPORT Event ;
 FROM Posix IMPORT mx_signal_pending ;
-FROM XServer IMPORT dpy, root, width, height ;
+FROM XServer IMPORT dpy, width, height ;
 FROM Win IMPORT Handle ;
 FROM Gfx IMPORT Surface ;
 IMPORT Win, Gfx, Str, Widgets, XServer ;
