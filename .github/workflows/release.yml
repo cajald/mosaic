@@ -19,7 +19,7 @@ jobs:
 
       - name: build
         # users will not have the gm2 runtime, so link it (and libstdc++) statically
-        run: make -j"$(nproc)" LDFLAGS="-static-libgm2 -static-libstdc++ -static-libgcc"
+        run: make -j"$(nproc)" DEPFLAGS= LDFLAGS="-static-libgm2 -static-libstdc++ -static-libgcc"
 
       - name: check runtime dependencies
         run: |

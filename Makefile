@@ -10,6 +10,8 @@ PKG_CONFIG ?= pkg-config
 M2FLAGS ?= -O2 -g -Wall
 CFLAGS ?= -O2 -g -Wall -Wextra
 LDFLAGS ?=
+# gm2 13 needs -fcpp for these; clean builds (ci) can pass DEPFLAGS=
+DEPFLAGS ?= -MMD -MP
 
 X11_CFLAGS := $(shell $(PKG_CONFIG) --cflags x11 xft)
 X11_LIBS := $(shell $(PKG_CONFIG) --libs x11 xft)
@@ -52,10 +54,10 @@ $(BUILD)/mosaic.o $(BUILD)/panel.o $(BUILD)/launcher.o \
 	$(BUILD)/files.o: M2MAIN := -fscaffold-main -fscaffold-dynamic
 
 $(BUILD)/%.o: %.mod | $(BUILD)
-	$(GM2) $(M2FLAGS) $(M2MAIN) $(INCLUDES) -MMD -MP -c $< -o $@
+	$(GM2) $(M2FLAGS) $(M2MAIN) $(INCLUDES) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD)/%.o: %.c | $(BUILD)
-	$(CC) $(CFLAGS) $(X11_CFLAGS) -MMD -MP -c $< -o $@
+	$(CC) $(CFLAGS) $(X11_CFLAGS) $(DEPFLAGS) -c $< -o $@
 
 $(BUILD):
 	mkdir -p $@
