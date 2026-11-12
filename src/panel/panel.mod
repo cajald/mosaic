@@ -447,8 +447,9 @@ BEGIN
     END
   ELSIF (e.window = root) AND (e.type = ConfigureNotify)
   THEN
-    (* the screen changed size *)
+    (* the screen changed size; a bottom bar follows the new height *)
     width := e.width ;
+    XServer.height := e.height ;
     Place
   ELSIF Tasks.Changed (e)
   THEN

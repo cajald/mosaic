@@ -63,4 +63,5 @@ font = DejaVu Sans:size=9
 color.active = #2e4a66
 desktop.pattern = tiles
 clock.format = %a %d %b  %H:%M
+panel.position = top        # or bottom
 ```
