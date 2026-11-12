@@ -150,6 +150,19 @@ END Step ;
 
 PROCEDURE Popup (VAR m: Menu; x, y: INTEGER; t: Time;
                  other: Dispatch) : INTEGER ;
+BEGIN
+  RETURN Run (m, x, y, FALSE, t, other)
+END Popup ;
+
+PROCEDURE PopupAbove (VAR m: Menu; x, y: INTEGER; t: Time;
+                      other: Dispatch) : INTEGER ;
+BEGIN
+  RETURN Run (m, x, y, TRUE, t, other)
+END PopupAbove ;
+
+(* above: y is where the menu's bottom edge goes *)
+PROCEDURE Run (VAR m: Menu; x, y: INTEGER; above: BOOLEAN; t: Time;
+               other: Dispatch) : INTEGER ;
 VAR
   h: Handle ;
   e: Event ;
@@ -174,6 +187,10 @@ BEGIN
     INC (ht, ItemHeight (m, i - 1))
   END ;
   IF w > MaxWidth THEN w := MaxWidth END ;
+  IF above
+  THEN
+    DEC (y, ht)
+  END ;
   (* keep the whole menu on screen *)
   IF x + w > width THEN x := width - w END ;
   IF y + ht > height THEN y := height - ht END ;
@@ -261,6 +278,6 @@ BEGIN
   IF XUngrabKeyboard (dpy, CurrentTime) = 0 THEN END ;
   Win.Destroy (h) ;
   RETURN choice
-END Popup ;
+END Run ;
 
 END Menu.

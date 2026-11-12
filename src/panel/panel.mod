@@ -255,6 +255,16 @@ BEGIN
   RETURN -1
 END ZoneAt ;
 
+(* menus open away from the screen edge the panel sits on *)
+PROCEDURE OpenMenu (VAR m: Menu.Menu; x: INTEGER; VAR e: Event) : INTEGER ;
+BEGIN
+  IF atBottom
+  THEN
+    RETURN Menu.PopupAbove (m, x, XServer.height - height, e.time, Dispatch)
+  END ;
+  RETURN Menu.Popup (m, x, height, e.time, Dispatch)
+END OpenMenu ;
+
 PROCEDURE Launch (name: ARRAY OF CHAR) ;
 VAR
   a: Args ;
@@ -286,7 +296,7 @@ BEGIN
   Menu.Add (m, "Files", TRUE) ;
   Menu.AddSeparator (m) ;
   Menu.Add (m, "Log Out…", TRUE) ;
-  CASE Menu.Popup (m, x, height, e.time, Dispatch) OF
+  CASE OpenMenu (m, x, e) OF
     0: Launch ("mosaic-launcher") |
     1: Launch ("terminal") |
     2: Launch ("mosaic-files") |
@@ -325,7 +335,7 @@ BEGIN
   END ;
   Menu.AddSeparator (m) ;
   Menu.Add (m, "Close", TRUE) ;
-  choice := Menu.Popup (m, z.x, height, e.time, Dispatch) ;
+  choice := OpenMenu (m, z.x, e) ;
   IF choice = 0
   THEN
     IF t.minimized THEN Tasks.Activate (t.window) ELSE Tasks.Minimize (t.window) END
@@ -360,7 +370,7 @@ BEGIN
       INC (shown)
     END
   END ;
-  choice := Menu.Popup (m, z.x, height, e.time, Dispatch) ;
+  choice := OpenMenu (m, z.x, e) ;
   IF choice >= 0
   THEN
     Tasks.Activate (Tasks.tasks[index[choice]].window)
