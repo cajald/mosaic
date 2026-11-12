@@ -30,4 +30,8 @@ PROCEDURE AddSeparator (VAR m: Menu) ;
 PROCEDURE Popup (VAR m: Menu; x, y: INTEGER; t: Time;
                  other: Dispatch) : INTEGER ;
 
+(* the same, opening upwards from y, for things at the screen bottom *)
+PROCEDURE PopupAbove (VAR m: Menu; x, y: INTEGER; t: Time;
+                      other: Dispatch) : INTEGER ;
+
 END Menu.

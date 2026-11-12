@@ -38,9 +38,11 @@ VAR
   zoneCount: INTEGER ;
   clockText: ARRAY [0..63] OF CHAR ;
   clockFormat: ARRAY [0..63] OF CHAR ;
+  atBottom: BOOLEAN ;
   pressed: INTEGER ;
   running: BOOLEAN ;
   event: Event ;
+  position: ARRAY [0..15] OF CHAR ;
 
 PROCEDURE AddZone (kind: ZoneKind; x, w, index: INTEGER) ;
 BEGIN
@@ -223,9 +225,17 @@ BEGIN
   Layout ;
   s := panel^.surface ;
   Gfx.Fill (s, 0, 0, panel^.width, height, Gfx.Face) ;
-  Gfx.Line (s, 0, 0, panel^.width - 1, 0, Gfx.Light) ;
-  Gfx.Line (s, 0, height - 2, panel^.width - 1, height - 2, Gfx.Shadow) ;
-  Gfx.Line (s, 0, height - 1, panel^.width - 1, height - 1, Gfx.Dark) ;
+  (* the dark edge faces the windows *)
+  IF atBottom
+  THEN
+    Gfx.Line (s, 0, 0, panel^.width - 1, 0, Gfx.Dark) ;
+    Gfx.Line (s, 0, 1, panel^.width - 1, 1, Gfx.Light) ;
+    Gfx.Line (s, 0, height - 1, panel^.width - 1, height - 1, Gfx.Shadow)
+  ELSE
+    Gfx.Line (s, 0, 0, panel^.width - 1, 0, Gfx.Light) ;
+    Gfx.Line (s, 0, height - 2, panel^.width - 1, height - 2, Gfx.Shadow) ;
+    Gfx.Line (s, 0, height - 1, panel^.width - 1, height - 1, Gfx.Dark)
+  END ;
   FOR i := 0 TO zoneCount - 1 DO
     DrawZone (s, zones[i], i = pressed)
   END ;
@@ -244,6 +254,16 @@ BEGIN
   END ;
   RETURN -1
 END ZoneAt ;
+
+(* menus open away from the screen edge the panel sits on *)
+PROCEDURE OpenMenu (VAR m: Menu.Menu; x: INTEGER; VAR e: Event) : INTEGER ;
+BEGIN
+  IF atBottom
+  THEN
+    RETURN Menu.PopupAbove (m, x, XServer.height - height, e.time, Dispatch)
+  END ;
+  RETURN Menu.Popup (m, x, height, e.time, Dispatch)
+END OpenMenu ;
 
 PROCEDURE Launch (name: ARRAY OF CHAR) ;
 VAR
@@ -276,7 +296,7 @@ BEGIN
   Menu.Add (m, "Files", TRUE) ;
   Menu.AddSeparator (m) ;
   Menu.Add (m, "Log Out…", TRUE) ;
-  CASE Menu.Popup (m, x, height, e.time, Dispatch) OF
+  CASE OpenMenu (m, x, e) OF
     0: Launch ("mosaic-launcher") |
     1: Launch ("terminal") |
     2: Launch ("mosaic-files") |
@@ -315,7 +335,7 @@ BEGIN
   END ;
   Menu.AddSeparator (m) ;
   Menu.Add (m, "Close", TRUE) ;
-  choice := Menu.Popup (m, z.x, height, e.time, Dispatch) ;
+  choice := OpenMenu (m, z.x, e) ;
   IF choice = 0
   THEN
     IF t.minimized THEN Tasks.Activate (t.window) ELSE Tasks.Minimize (t.window) END
@@ -350,7 +370,7 @@ BEGIN
       INC (shown)
     END
   END ;
-  choice := Menu.Popup (m, z.x, height, e.time, Dispatch) ;
+  choice := OpenMenu (m, z.x, e) ;
   IF choice >= 0
   THEN
     Tasks.Activate (Tasks.tasks[index[choice]].window)
@@ -427,8 +447,9 @@ BEGIN
     END
   ELSIF (e.window = root) AND (e.type = ConfigureNotify)
   THEN
-    (* the screen changed size *)
+    (* the screen changed size; a bottom bar follows the new height *)
     width := e.width ;
+    XServer.height := e.height ;
     Place
   ELSIF Tasks.Changed (e)
   THEN
@@ -441,10 +462,18 @@ VAR
   strut: ARRAY [0..11] OF LONGCARD ;
   i: CARDINAL ;
 BEGIN
-  IF XMoveResizeWindow (dpy, panel^.window, 0, 0, width, height) = 0 THEN END ;
   FOR i := 0 TO 11 DO strut[i] := 0 END ;
-  strut[2] := height ;
-  strut[9] := width - 1 ;
+  IF atBottom
+  THEN
+    IF XMoveResizeWindow (dpy, panel^.window, 0, XServer.height - height,
+                          width, height) = 0 THEN END ;
+    strut[3] := height ;
+    strut[11] := width - 1
+  ELSE
+    IF XMoveResizeWindow (dpy, panel^.window, 0, 0, width, height) = 0 THEN END ;
+    strut[2] := height ;
+    strut[9] := width - 1
+  END ;
   Props.SetCardinals (panel^.window, Atoms.NetWmStrut, XA_CARDINAL, strut, 4) ;
   Props.SetCardinals (panel^.window, Atoms.NetWmStrutPartial, XA_CARDINAL,
                       strut, 12)
@@ -472,6 +501,12 @@ BEGIN
     exit (1)
   END ;
   Config.Get ("clock.format", "%a %d %b  %H:%M", clockFormat) ;
+  Config.Get ("panel.position", "top", position) ;
+  atBottom := Str.Equal (position, "bottom") ;
+  IF NOT (atBottom OR Str.Equal (position, "top"))
+  THEN
+    Log.Error2 ("unknown panel.position, using top", position)
+  END ;
   clockText[0] := 0C ;
   IF UpdateClock () THEN END ;
   pressed := -1 ;
