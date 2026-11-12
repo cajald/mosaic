@@ -11,6 +11,16 @@ Mosaic includes:
 - `mosaic-launcher`: an application launcher that reads freedesktop `.desktop` files.
 - `mosaic-files`: a file manager that can copy, move, rename and delete.
 
+## Installing
+
+On x86_64 Linux, install the latest release with:
+
+```sh
+curl -fsSL https://github.com/tuna4ll/mosaic/releases/latest/download/install.sh | sh
+```
+
+It needs libX11 and libXft, and installs to `/usr/local` (set `PREFIX` to change it) plus an X session entry in `/usr/share/xsessions`.
+
 ## Building
 
 You need GNU Modula-2 (`gm2`), a C compiler, GNU Make, and the libX11 and libXft development files.

@@ -1,0 +1,42 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    # the oldest ubuntu that packages gm2; its glibc (2.39) is the floor for users
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y gm2 make pkg-config libx11-dev libxft-dev
+
+      - name: build
+        # users will not have the gm2 runtime, so link it (and libstdc++) statically
+        run: make -j"$(nproc)" LDFLAGS="-static-libgm2 -static-libstdc++ -static-libgcc"
+
+      - name: check runtime dependencies
+        run: |
+          for p in mosaic mosaic-panel mosaic-launcher mosaic-files; do
+            if ldd "$p" | grep -E 'libm2|libstdc\+\+|not found'; then echo "$p links a library users lack" >&2; exit 1; fi
+          done
+
+      - name: package
+        run: |
+          d=mosaic-linux-x86_64
+          mkdir "$d"
+          cp mosaic mosaic-panel mosaic-launcher mosaic-files assets/mosaic.desktop README.md "$d"/
+          strip "$d"/mosaic "$d"/mosaic-*
+          tar czf "$d.tar.gz" "$d"
+          sha256sum "$d.tar.gz" > SHA256SUMS
+
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" mosaic-linux-x86_64.tar.gz SHA256SUMS install.sh --generate-notes
