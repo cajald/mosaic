@@ -137,7 +137,7 @@ END DoVolumeDown ;
 
 PROCEDURE DoVolumeToggleMute ;
 BEGIN
-  IF volumeMuted
+  IF GetMuteState ()
   THEN
     RunMixerCommand (ADR("amixer set Master unmute")) ;
     volumeMuted := FALSE ;
@@ -188,8 +188,14 @@ BEGIN
   Bind (XKF3, Mod1Mask, OpenFiles, 0)
 END BindDefaults ;
 
+PROCEDURE GetMuteState () : BOOLEAN ;
+BEGIN
+  RETURN system (
+    ADR ("amixer get Master | awk '/\\[off\\]/ { muted=1 } END { exit !muted }'")
+  ) = 0
+END GetMuteState ;
+
 BEGIN
   numlock := 0 ;
-  volumeMuted := FALSE ;
   BindDefaults
 END Keys.
