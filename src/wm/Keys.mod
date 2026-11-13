@@ -5,6 +5,8 @@ FROM Xlib IMPORT KeySym, XKeysymToKeycode, XGrabKey, XUngrabKey,
                  LockMask, ControlMask, Mod1Mask, Mod4Mask ;
 FROM XGlue IMPORT mx_numlock_mask ;
 FROM XServer IMPORT dpy, root ;
+FROM SYSTEM IMPORT ADR ;
+FROM libc IMPORT system ;
 
 CONST
   MaxBindings = 32 ;
@@ -22,6 +24,9 @@ CONST
   XKAltR = 0FFEAH ;
   XK1 = 031H ;
   XKt = 074H ;
+  XRaiseVolume = 1008FF13H ;
+  XLowerVolume = 1008FF11H ;
+  XMuteAudio = 1008FF12H ;
 
 TYPE
   Binding = RECORD
@@ -36,6 +41,7 @@ VAR
   bindings: ARRAY [0..MaxBindings - 1] OF Binding ;
   count: CARDINAL ;
   numlock: CARDINAL ;
+  volumeMuted: BOOLEAN ;
 
 PROCEDURE Bind (sym: KeySym; mods: CARDINAL; action: Action; arg: INTEGER) ;
 BEGIN
@@ -107,6 +113,41 @@ BEGIN
          (keycode = ORD (XKeysymToKeycode (dpy, XKAltR)))
 END IsCycleModifier ;
 
+PROCEDURE DoVolumeUp ;
+BEGIN
+  system(ADR("amixer set Master 5%+"))
+END DoVolumeUp ;
+
+PROCEDURE DoVolumeDown ;
+BEGIN
+  system (ADR("amixer set Master 5%-"))
+END DoVolumeDown ;
+
+PROCEDURE DoVolumeToggleMute ;
+BEGIN
+  IF volumeMuted
+  THEN
+    system (ADR("amixer set Master unmute")) ;
+    volumeMuted := FALSE ;
+  ELSE
+    system (ADR("amixer set Master mute")) ;
+    volumeMuted := TRUE ;
+  END
+END DoVolumeToggleMute ;
+
+PROCEDURE RunVolumeAction (action: Action);
+BEGIN
+  CASE action OF
+    VolumeUp:
+      DoVolumeUp |
+    VolumeDown:
+      DoVolumeDown |
+    VolumeToggleMute:
+      DoVolumeToggleMute
+  ELSE
+  END
+END RunVolumeAction;
+
 PROCEDURE BindDefaults ;
 VAR
   i: INTEGER ;
@@ -122,6 +163,10 @@ BEGIN
   Bind (XKLeft, ControlMask + Mod1Mask, DesktopPrev, 0) ;
   Bind (XKRight, ControlMask + Mod1Mask + ShiftMask, SendNext, 0) ;
   Bind (XKLeft, ControlMask + Mod1Mask + ShiftMask, SendPrev, 0) ;
+  Bind (XRaiseVolume, 0, VolumeUp, 0) ;
+  Bind (XLowerVolume, 0, VolumeDown, 0) ;
+  Bind (XMuteAudio, 0, VolumeToggleMute, 0) ;
+
   FOR i := 0 TO 8 DO
     Bind (XK1 + VAL (KeySym, i), ControlMask + Mod1Mask, GotoDesktop, i)
   END ;
@@ -133,5 +178,6 @@ END BindDefaults ;
 
 BEGIN
   numlock := 0 ;
+  volumeMuted := FALSE ;
   BindDefaults
 END Keys.
