@@ -42,7 +42,6 @@ VAR
   bindings: ARRAY [0..MaxBindings - 1] OF Binding ;
   count: CARDINAL ;
   numlock: CARDINAL ;
-  volumeMuted: BOOLEAN ;
 
 PROCEDURE Bind (sym: KeySym; mods: CARDINAL; action: Action; arg: INTEGER) ;
 BEGIN
@@ -127,24 +126,17 @@ END RunMixerCommand ;
 
 PROCEDURE DoVolumeUp ;
 BEGIN
-  RunMixerCommand (ADR("amixer set Master 5%+"))
+  RunMixerCommand (ADR("amixer -q set Master 5%+"))
 END DoVolumeUp ;
 
 PROCEDURE DoVolumeDown ;
 BEGIN
-  RunMixerCommand (ADR("amixer set Master 5%-"))
+  RunMixerCommand (ADR("amixer -q set Master 5%-"))
 END DoVolumeDown ;
 
 PROCEDURE DoVolumeToggleMute ;
 BEGIN
-  IF GetMuteState ()
-  THEN
-    RunMixerCommand (ADR("amixer set Master unmute")) ;
-    volumeMuted := FALSE ;
-  ELSE
-    RunMixerCommand (ADR("amixer set Master mute")) ;
-    volumeMuted := TRUE ;
-  END
+  RunMixerCommand (ADR ("amixer -q set Master toggle")) ;
 END DoVolumeToggleMute ;
 
 PROCEDURE RunVolumeAction (action: Action);
@@ -187,13 +179,6 @@ BEGIN
   Bind (XKt, ControlMask + Mod1Mask, OpenTerminal, 0) ;
   Bind (XKF3, Mod1Mask, OpenFiles, 0)
 END BindDefaults ;
-
-PROCEDURE GetMuteState () : BOOLEAN ;
-BEGIN
-  RETURN system (
-    ADR ("amixer get Master | awk '/\\[off\\]/ { muted=1 } END { exit !muted }'")
-  ) = 0
-END GetMuteState ;
 
 BEGIN
   numlock := 0 ;
