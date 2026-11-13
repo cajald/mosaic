@@ -5,7 +5,8 @@ FROM Xlib IMPORT KeySym, XKeysymToKeycode, XGrabKey, XUngrabKey,
                  LockMask, ControlMask, Mod1Mask, Mod4Mask ;
 FROM XGlue IMPORT mx_numlock_mask ;
 FROM XServer IMPORT dpy, root ;
-FROM SYSTEM IMPORT ADR ;
+FROM SYSTEM IMPORT ADR, ADDRESS ;
+IMPORT Log ;
 FROM libc IMPORT system ;
 
 CONST
@@ -113,24 +114,35 @@ BEGIN
          (keycode = ORD (XKeysymToKeycode (dpy, XKAltR)))
 END IsCycleModifier ;
 
+PROCEDURE RunMixerCommand (command: ADDRESS) ;
+VAR
+  status: INTEGER ;
+BEGIN
+  status := system (command) ;
+  IF status # 0
+  THEN
+    Log.Error2 ("keys", "volume command failed") ;
+  END
+END RunMixerCommand ;
+
 PROCEDURE DoVolumeUp ;
 BEGIN
-  system(ADR("amixer set Master 5%+"))
+  RunMixerCommand (ADR("amixer set Master 5%+"))
 END DoVolumeUp ;
 
 PROCEDURE DoVolumeDown ;
 BEGIN
-  system (ADR("amixer set Master 5%-"))
+  RunMixerCommand (ADR("amixer set Master 5%-"))
 END DoVolumeDown ;
 
 PROCEDURE DoVolumeToggleMute ;
 BEGIN
   IF volumeMuted
   THEN
-    system (ADR("amixer set Master unmute")) ;
+    RunMixerCommand (ADR("amixer set Master unmute")) ;
     volumeMuted := FALSE ;
   ELSE
-    system (ADR("amixer set Master mute")) ;
+    RunMixerCommand (ADR("amixer set Master mute")) ;
     volumeMuted := TRUE ;
   END
 END DoVolumeToggleMute ;
